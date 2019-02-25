@@ -5,8 +5,8 @@
  * Får forståelse av hvordan databasen kan designes som en del av systemet.
 
 ## Problemer: Treningsdagbok
- * Oversikert over treninger, resultater og øvelser.
- * Treningssenter, for ekspempel SiT Portalen treningssenter.
+ * Oversikt over treninger, resultater og øvelser.
+ * Treningssenter, for eksempel SiT Portalen treningssenter.
  * Treninger, øvelser, form, prestasjon, notater, …
  * Fastmonterte apparater.
  * Frie øvelser.
@@ -30,7 +30,7 @@
 
 ## Innlevering 2 - Implementasjon
  * _frist 21.mars_
- * Grafisk eller tekstlig grensesnitt
+ * Grafisk eller tekstbasert grensesnitt
  * Leveranse:
      * Et kjørbart program i form av en JAR-fil.
      * Kildekoden til programmet i en zip.
