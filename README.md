@@ -13,7 +13,7 @@
  * Øvelsesgrupper.
  * Se [oppgavetekst](https://ntnu.blackboard.com/bbcswebdav/pid-602006-dt-content-rid-19917416_1/courses/194_TDT4145_1_2019_V_1/TDT4145%20V19%20Prosjekt.pdf)
 
-## Teningsdagbokens funksjonalitet
+## Treningsdagbokens funksjonalitet
  1. Registrerte apparater, øvelser og treningsøkter med tilhørende data.
  2. Hente ut _n_ siste gjennomførte treningsøkter med notater.
  3. For hver øvelse skal det være mulig å se en resultatlogg i et gitt tidsintervall.
