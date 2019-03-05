@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS Workout (
     WorkoutID INT AUTO_INCREMENT NOT NULL,
-    WorkoutDate DATE,
+    WorkoutDate DATETIME,
     Duration INT,
     Performance VARCHAR(255),
     Shape VARCHAR(255),
@@ -26,23 +26,31 @@ CREATE TABLE IF NOT EXISTS ExcerciseDevice (
     Weight INT,
     Repetitions INT,
     PRIMARY KEY (ExcerciseID),
-    FOREIGN KEY (ExcersiseID) REFERENCES (Excercise.ExcerciseID),
-    FOREIGN KEY (DeviceID) REFERENCES (Device.DeviceID)
+    FOREIGN KEY (ExcersiseID)
+        REFERENCES (Excercise.ExcerciseID)
+        ON DELETE CASCADE,
+    FOREIGN KEY (DeviceID)
+        REFERENCES (Device.DeviceID)
 );
 
 CREATE TABLE IF NOT EXISTS ExcerciseFree (
     ExcerciseID INT NOT NULL,
     Description VARCHAR(255),
     PRIMARY KEY (ExcerciseID),
-    FOREIGN KEY (ExcerciseID) REFERENCES (Excercise.ExcerciseID)
+    FOREIGN KEY (ExcerciseID)
+        REFERENCES (Excercise.ExcerciseID)
+        ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS ExcerciseInWorkout (
     WorkoutID INT NOT NULL,
     ExcerciseID INT NOT NULL,
     PRIMARY KEY (WorkoutID, ExcerciseID),
-    FOREIGN KEY (WorkoutID) REFERENCES (Workout.WorkoutID),
-    FOREIGN KEY (ExcerciseID) REFERENCES (Excercise.ExcerciseID)
+    FOREIGN KEY (WorkoutID)
+        REFERENCES (Workout.WorkoutID)
+        ON DELETE CASCADE
+    FOREIGN KEY (ExcerciseID)
+        REFERENCES (Excercise.ExcerciseID)
 )
 
 CREATE TABLE IF NOT EXISTS ExcerciseNote (
@@ -50,7 +58,9 @@ CREATE TABLE IF NOT EXISTS ExcerciseNote (
     Goal VARCHAR(255),
     Reflection VARCHAr(255),
     PRIMARY KEY (WorkoutID),
-    FOREIGN KEY (WorkoutID) REFERENCES (Workout.WorkoutID)
+    FOREIGN KEY (WorkoutID)
+        REFERENCES (Workout.WorkoutID)
+        ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS ExcerciseGroup (
@@ -63,7 +73,11 @@ CREATE TABLE IF NOT EXISTS ExcerciseInGroup (
     GroupID INT NOT NULL,
     ExcerciseID INT NOT NULL,
     PRIMARY KEY (GroupID, ExcerciseID),
-    FOREIGN KEY (GroupID) REFERENCES (ExcerciseGroup.GroupID),
-    FOREIGN KEY (ExcerciseID) REFERENCES (Excercise.ExcerciseID)
+    FOREIGN KEY (GroupID)
+        REFERENCES (ExcerciseGroup.GroupID)
+        ON DELETE CASCADE,
+    FOREIGN KEY (ExcerciseID)
+        REFERENCES (Excercise.ExcerciseID)
+        ON DELETE CASCADE
 );
 
