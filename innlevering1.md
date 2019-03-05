@@ -1,6 +1,6 @@
 ---
 title: "Innlevering 1: Konseptuell datamodell"
-author: [Iver Håkonsen, Kristian Hardang, Isak Collett]
+author: [Iver Håkonsen, Kristian Hardang, Isak Collett, Nicolai Brummenæs]
 date: "27.02.19"
 lang: "nb"
 header-includes: |
