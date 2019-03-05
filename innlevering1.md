@@ -9,17 +9,24 @@ header-includes: |
 
 
 ## ER-diagram
-![ER-diagram](img/ER.png)
+![ER-diagram](img/ER2.png)
 
 ## Relasjonsdatabasemodell
 * **Treningsøkt**( \underline{TreningsøktID} , Dato, Varighet, Prestasjon, Form)
 * **Øvelse**( \underline{ØvelseID} , Navn)
+    * ØvelseID fremmednøkkel til Treningsøkt
 * **ØvelseApparat**( \underline{ØvelseID}, \dashuline{ApparatID}, AntallKilo, AntallSett)
+    * ØvelseID fremmednøkkel til Treningsøkt, ApparatID fremmednøkkel til Apparat.
 * **ØveleseFri**(\underline{ØvelseID}, Beskrivelse)
-* **ØvelseIØkt**( \underline{TreningsøktID} , \underline{ØvelseID})
+    * ØvelseID fremmednøkkel til Treningsøkt.
+* **ØvelseIØkt**( \underline{TreningsøktID, ØvelseID})
+    * TreningsøktID fremmednøkkel til Treningsøkt, ØvelseID fremmednøkkel til Øvelse.
 * **Notat**( \dashuline{TreningsøktID} , Treningsformål, Refleksjon)
+    * TreningsøktID fremmednøkkel til Treningsøkt.
 * **Apparat**(\underline{ApparatID} , Navn, Beskrivelse) 
-* TODO: Gruppe
+* **ØvelsesGruppe**(\underline{GruppeID}, Navn}
+* **ØvelseIGruppe**(\underline{GruppeID, ØvelseID})
+    * GruppeID fremmednøkkel til ØvelsesGruppe, ØvelseID fremmednøkkel til Øvelse.
 
 ## Beskrivelse av krav 
 1. Registrere apparater, øvelser og treningsøkter med tilhørende data:
@@ -32,25 +39,10 @@ header-includes: |
     * Siden treningsøktene har en dato, kan man sortere treningsøktene etter dette og velge  
       de _n_ første. 
       
-```sql
-SELECT * 
-FROM Treningsøkt
-ORDER BY dato DESC
-LIMIT n;
-```
 3. For hver enkelt øvelse skal det være mulig å se en resultatlogg i et gitt
    tidsintervall spesifisert av brukeren:
     * 
 
-```sql
-SELECT ØvelseID, Navn, Prestasjon, Form
-FROM TreningsØkt 
-    NATURAL JOIN ØvelseIØkt
-    NATURAL JOIN Øvelse
-WHERE (TreningsØkt.Dato > n AND Treningsøkt.Dato < m)
-GROUP BY ØvelseID;
-
-```
 4. Lage øvelsesgrupper og finne øvelser som er i samme gruppe:
 5. Et valgfritt use case som dere selv bestemmer:
 
