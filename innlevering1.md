@@ -14,15 +14,14 @@ header-includes: |
 ## Relasjonsdatabasemodell
 * **Treningsøkt**( \underline{TreningsøktID} , Dato, Varighet, Prestasjon, Form)
 * **Øvelse**( \underline{ØvelseID} , Navn)
-    * ØvelseID fremmednøkkel til Treningsøkt
 * **Apparat**(\underline{ApparatID} , Navn, Beskrivelse) 
 * **ØvelseApparat**( \underline{ØvelseID}, \dashuline{ApparatID}, AntallKilo, AntallSett)
-    * ØvelseID fremmednøkkel til Treningsøkt, ApparatID fremmednøkkel til Apparat.
+    * ØvelseID fremmednøkkel til Øvelse, ApparatID fremmednøkkel til Apparat.
 * **ØveleseFri**(\underline{ØvelseID}, Beskrivelse)
-    * ØvelseID fremmednøkkel til Treningsøkt.
+    * ØvelseID fremmednøkkel til Øvelse.
 * **ØvelseIØkt**( \underline{TreningsøktID, ØvelseID})
     * TreningsøktID fremmednøkkel til Treningsøkt, ØvelseID fremmednøkkel til Øvelse.
-* **Notat**( \dashuline{TreningsøktID} , Treningsformål, Refleksjon)
+* **Notat**( \underline{TreningsøktID} , Treningsformål, Refleksjon)
     * TreningsøktID fremmednøkkel til Treningsøkt.
 * **ØvelsesGruppe**(\underline{GruppeID}, Navn}
 * **ØvelseIGruppe**(\underline{GruppeID, ØvelseID})
