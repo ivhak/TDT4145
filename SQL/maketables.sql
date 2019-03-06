@@ -4,7 +4,7 @@ USE WorkoutProgram;
 
 CREATE TABLE IF NOT EXISTS Workout (
     WorkoutID INT NOT NULL AUTO_INCREMENT,
-    WorkoutDate DATETIME,
+    WorkoutDate DATETIME DEFAULT NOW(),
     Duration INT,
     Performance VARCHAR(255),
     Shape VARCHAR(255),
