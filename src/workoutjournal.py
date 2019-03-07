@@ -1,8 +1,11 @@
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+
 import mysql.connector
 import getpass
 import sys
 import os
-import helper
+import helper as h
 from colorama import Fore, init
 init(autoreset=True)
 
@@ -28,19 +31,19 @@ def insert_workout(db):
     cursor = db.cursor()
 
     duration = input("Duration (minutes): ")
-    duration = helper.int_parse(duration)
+    duration = h.int_parse(duration)
 
     accepted = ['A', 'B', 'C', 'D', 'E', 'F']
 
     # Get user input of performance. If something else than a
     # letter grade is submitted, it defaults to a C
     performance = input("Performance (letter grade A-F): ")
-    performance = helper.str_parse(performance, accepted, 'C')
+    performance = h.str_parse(performance, accepted, 'C')
 
     # Get user input of shape. If something else than a
     # letter grade is submitted, it defaults to a C
     shape = input("Shape (letter grade A-F): ")
-    shape = helper.str_parse(shape, accepted, 'C')
+    shape = h.str_parse(shape, accepted, 'C')
 
     query = ("INSERT INTO Workout(Duration, Performance, Shape) " +
              "VALUES ({},'{}','{}');".format(duration, performance, shape))
@@ -116,7 +119,7 @@ def insert_excerciseondevice(db, exc_id: int):
 
         sel_dev_id = input('Select an ID, or press 0 to add a new one: ')
         # If sel_dev_id is not a number, default to 0
-        sel_dev_id = helper.int_parse(sel_dev_id)
+        sel_dev_id = h.int_parse(sel_dev_id)
 
     # Add a new device if the user sumbits 0 or an invalid ID.
     if (sel_dev_id == 0 or sel_dev_id not in dev_ids):
@@ -132,11 +135,11 @@ def insert_excerciseondevice(db, exc_id: int):
     if (sel_dev_id in dev_ids):
         weight = input('Weight (kg): ')
         # If weights is not a number, default to 0
-        weight = helper.int_parse(weight)
+        weight = h.int_parse(weight)
 
         reps = input('Repetitions: ')
         # If reps is not a number, default to 0
-        reps = helper.int_parse(reps)
+        reps = h.int_parse(reps)
 
         e = db.cursor()
         e.execute("INSERT INTO " +
@@ -160,12 +163,16 @@ def insert_excercisefree(db, exc_id: int):
 
 # List all the workouts in the database
 def list_workouts(db):
+    count = input('How many of the last workouts would you like to see?: ')
+    count = h.int_parse(count, 5)
     cursor = db.cursor()
-    cursor.execute("SELECT * FROM Workout;")
+    cursor.execute("SELECT * FROM Workout " +
+                   "ORDER BY WorkoutDate DESC " +
+                   "LIMIT {};".format(count))
     rows = cursor.fetchall()
 
-    print('Workouts:')
-    print('-'*helper.terminal_width())
+    print(Fore.RED + 'Workouts:')
+    print('-'*h.terminal_width())
 
     # Loop through the workouts
     for (id, date, duration, performance, shape) in rows:
@@ -176,8 +183,8 @@ def list_workouts(db):
         minutes = 'minutes' if duration != 1 else 'minute'
         print('{:%d %b %y %H:%M}'.format(date))
         print()
-        print(Fore.BLUE + 'Duration   :', '{} {}'.format(duration, minutes))
-        print(Fore.BLUE + 'Shape      :', shape)
+        print(Fore.BLUE + 'Duration:   ', '{} {}'.format(duration, minutes))
+        print(Fore.BLUE + 'Shape:      ', shape)
         print(Fore.BLUE + 'Performance:', performance)
 
         # Print excercises if there are any
@@ -197,11 +204,11 @@ def list_workouts(db):
             print()
             print(Fore.YELLOW + 'Note:')
             print('├─── Goal: ')
-            print(helper.wrap_indent(goal, 5, '│'))
+            print(h.wrap_indent(goal, 5, '│'))
             print('│')
             print('└─── Reflection:')
-            print(helper.wrap_indent(refl, 5))
-        print('-'*helper.terminal_width())
+            print(h.wrap_indent(refl, 5))
+        print('-'*h.terminal_width())
     print()
 
 
@@ -240,7 +247,7 @@ def delete_workout(db):
     cursor = db.cursor()
     query = "SELECT * FROM Workout;"
     cursor.execute(query)
-    print('-'*helper.terminal_width())
+    print('-'*h.terminal_width())
     print('Which workout would you like to delete?')
     ids = []
     rows = cursor.fetchall()
@@ -250,7 +257,7 @@ def delete_workout(db):
 
     print()
     deleteId = input('Select an ID: ')
-    deleteId = helper.int_parse(deleteId, -1)
+    deleteId = h.int_parse(deleteId, -1)
     if (deleteId in ids):
         print()
         conf = input('Are you sure [Y/N]: ')
@@ -281,7 +288,8 @@ def chooseAction(db):
 
     for (index, option) in options.items():
         print('{}: {}'.format(index, option))
-    print('-'*helper.terminal_width())
+
+    print('-'*h.terminal_width())
     action = input('Select an action: ')
     print()
     try:
@@ -299,12 +307,14 @@ def chooseAction(db):
 def main():
     os.system('clear')
     print(Fore.BLUE + """
-              Welcome to your Workout Journal!
-              --------------------------------
+                     Welcome to your Workout Journal!
+                     --------------------------------
 
- This program requires that you have a MySQL server running
- on your machine. Log in using your username and password for
- the server
+ This program requires that you have a MySQL server running on your machine.
+ Log in using your username and password for the server. Make sure the server
+ is running.
+
+ This program is designed to be a journal where you can log your workouts.
 
     """)
     username = input(' MySQL Username: ')
@@ -318,12 +328,12 @@ def main():
         )
     except mysql.connector.errors.ProgrammingError:
 
-        print(" Invalid credentials, exiting..")
+        print(" Something went wrong, exiting ...")
         sys.exit()
 
     os.system('clear')
 
-    execute_script(mydb, '../SQL/maketables.sql')
+    execute_script(mydb, 'SQL/maketables.sql')
     mydb.cursor().execute('USE WorkoutProgram;')
 
     a = 1
