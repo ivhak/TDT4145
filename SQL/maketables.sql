@@ -59,8 +59,8 @@ CREATE TABLE IF NOT EXISTS ExcerciseInWorkout (
 
 CREATE TABLE IF NOT EXISTS ExcerciseNote (
     WorkoutID INT NOT NULL,
-    Goal VARCHAR(255),
-    Reflection VARCHAR(255),
+    Goal TEXT,
+    Reflection TEXT,
     PRIMARY KEY (WorkoutID),
     FOREIGN KEY (WorkoutID)
         REFERENCES Workout(WorkoutID)

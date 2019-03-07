@@ -1,16 +1,14 @@
 import mysql.connector
 import getpass
+import sys
 import os
+import helper
+from colorama import Fore, init
+init(autoreset=True)
 
 
-def show_tables(db):
-    mycursor = db.cursor()
-    mycursor.execute('SHOW TABLES;')
-    for table in mycursor:
-        print(table)
-
-
-def executeScript(db, filename):
+# Execute an SQL-script
+def execute_script(db, filename):
     cursor = db.cursor()
     with open(filename, 'r') as f:
         sqlFile = f.read()
@@ -25,133 +23,224 @@ def executeScript(db, filename):
                 pass
 
 
-def insertWorkout(db):
+# Insert a new workout in the database
+def insert_workout(db):
     cursor = db.cursor()
-    duration = input("Duration: ")
-    performance = input("Performance: ")
-    shape = input("Shape: ")
-    query = "INSERT INTO Workout(Duration, Performance, Shape) " + \
-        "VALUES ({},'{}','{}');".format(duration, performance, shape)
+
+    duration = input("Duration (minutes): ")
+    duration = helper.int_parse(duration)
+
+    accepted = ['A', 'B', 'C', 'D', 'E', 'F']
+
+    # Get user input of performance. If something else than a
+    # letter grade is submitted, it defaults to a C
+    performance = input("Performance (letter grade A-F): ")
+    performance = helper.str_parse(performance, accepted, 'C')
+
+    # Get user input of shape. If something else than a
+    # letter grade is submitted, it defaults to a C
+    shape = input("Shape (letter grade A-F): ")
+    shape = helper.str_parse(shape, accepted, 'C')
+
+    query = ("INSERT INTO Workout(Duration, Performance, Shape) " +
+             "VALUES ({},'{}','{}');".format(duration, performance, shape))
     try:
         cursor.execute(query)
     except Exception:
         pass
-    id = cursor.lastrowid
+
+    wo_id = cursor.lastrowid
     db.commit()
 
+    # Add excercises to the workout
     exc = input('Would you like to add som exercises?[Y/N]: ')
     while(exc == 'Y' or exc == 'y'):
         os.system('clear')
-        insertExcercise(db, id)
+        insert_excercise(db, wo_id)
         exc = input('Another one?[Y/N]: ')
 
+    # Add a note to the workout
+    note = input('Would you like to add a note?[Y/N]: ')
+    if (note == 'Y' or note == 'y'):
+        os.system('clear')
+        insert_note(db, wo_id)
 
-def insertExcerciseInWorkout(db, eid, wid):
+
+# Link a workout with an excercise
+def insert_excerciseinworkout(db, exc_id: int, wo_id: int):
     cursor = db.cursor()
     cursor.execute("INSERT INTO ExcerciseInWorkout (WorkoutID, ExcerciseID)" +
-                   "VALUES ({},{})".format(wid, eid))
+                   "VALUES ({},{});".format(wo_id, exc_id))
     db.commit()
 
 
-def insertExcercise(db, wid):
-    excType = input('Excercise with device [D] or without [W]?: ')
+# Insert a note belonging to a workout with ID wo_id
+def insert_note(db, wo_id: int):
+    cursor = db.cursor()
+    goal = input('Goal of the workout:\n')
+    print()
+    refl = input('Reflections:\n')
+    cursor.execute("INSERT INTO ExcerciseNote (WorkoutID, Goal, Reflection)" +
+                   "VALUES ({}, '{}', '{}');".format(wo_id, goal, refl))
+    db.commit()
+
+
+# Insert an excercise
+def insert_excercise(db, wo_id: int):
+    exc_type = input('Excercise with device [D] or without [W]?: ')
     name = input('Name of excercise: ')
     cursor = db.cursor()
-    cursor.execute("INSERT INTO Excercise(Name) VALUES ('{}')".format(name))
-    id = cursor.lastrowid
-    if (excType == 'D' or excType == 'd'):
-        insertExcerciseOnDevice(db, id)
+    cursor.execute("INSERT INTO Excercise(Name) VALUES ('{}');".format(name))
+    exc_id = cursor.lastrowid
+    if (exc_type == 'D' or exc_type == 'd'):
+        insert_excerciseondevice(db, exc_id)
     else:
-        insertExcerciseFree(db, id)
-    insertExcerciseInWorkout(db, id, wid)
+        insert_excercisefree(db, exc_id)
+    insert_excerciseinworkout(db, exc_id, wo_id)
 
 
-def insertExcerciseOnDevice(db, id):
+# Insert an excercise performed on a device
+def insert_excerciseondevice(db, exc_id: int):
     cursor = db.cursor()
     cursor.execute("SELECT * FROM Device;")
-    dids = []
-    print('Device:')
-    for (did, dname, _) in cursor:
-        dids += [did]
-        print('  ID: {}, Name: {}'.format(did, dname))
-    sid = int(input('Select an ID, or press 0 to add a new one.'))
-    if (sid == 0):
-        ndname = input('Name of device: ')
-        nddesc = input('Description of device: ')
+    dev_ids = []
+    rows = cursor.fetchall()
+    sel_dev_id = 0
+    if (rows is not None):
+        print('Device:')
+
+        # Print all registered devices
+        for (dev_id, dev_name, _) in cursor:
+            dev_ids += [dev_id]
+            print('  ID: {}, Name: {}'.format(dev_id, dev_name))
+
+        sel_dev_id = input('Select an ID, or press 0 to add a new one: ')
+        # If sel_dev_id is not a number, default to 0
+        sel_dev_id = helper.int_parse(sel_dev_id)
+
+    # Add a new device if the user sumbits 0 or an invalid ID.
+    if (sel_dev_id == 0 or sel_dev_id not in dev_ids):
+        new_dev_name = input('Name of device: ')
+        nwq_dev_desc = input('Description of device: ')
         d = db.cursor()
         d.execute("INSERT INTO Device(Name, Description)" +
-                  "VALUES ('{}', '{}')".format(ndname, nddesc))
-        sid = d.lastrowid
+                  "VALUES ('{}', '{}');".format(new_dev_name, nwq_dev_desc))
+        sel_dev_id = d.lastrowid
         db.commit()
-        dids += [sid]
+        dev_ids += [sel_dev_id]
 
-    if (sid in dids):
+    if (sel_dev_id in dev_ids):
         weight = input('Weight (kg): ')
+        # If weights is not a number, default to 0
+        weight = helper.int_parse(weight)
+
         reps = input('Repetitions: ')
+        # If reps is not a number, default to 0
+        reps = helper.int_parse(reps)
+
         e = db.cursor()
         e.execute("INSERT INTO " +
                   "ExcerciseDevice" +
-                  "(ExcerciseID, DeviceID, Weight, Repetitions)" +
-                  "VALUES ({},{},{},{})".format(id, sid, weight, reps))
+                  "(ExcerciseID, DeviceID, Weight, Repetitions) " +
+                  "VALUES ({},{},{},{});".format(exc_id,
+                                                 sel_dev_id,
+                                                 weight,
+                                                 reps))
         db.commit()
 
 
-def insertExcerciseFree(db, id):
+# Insert an excercise not performed on a device
+def insert_excercisefree(db, exc_id: int):
     desc = input('Description: ')
     cursor = db.cursor()
     cursor.execute("INSERT INTO ExcerciseFree(ExcerciseID, Description) " +
-                   "VALUES ({},'{}')".format(id, desc))
+                   "VALUES ({},'{}');".format(exc_id, desc))
     db.commit()
 
 
-def listWorkouts(db):
+# List all the workouts in the database
+def list_workouts(db):
     cursor = db.cursor()
-    query = "SELECT * FROM Workout;"
-    cursor.execute(query)
-    print()
-    print('Workouts:')
-    print('-------------------------')
+    cursor.execute("SELECT * FROM Workout;")
     rows = cursor.fetchall()
-    for (id, date, duration, performance, shape) in rows:
-        excercises = getExcercises(db, id)
 
-        minutes = 'minutes' if duration > 1 else 'minute'
+    print('Workouts:')
+    print('-'*helper.terminal_width())
+
+    # Loop through the workouts
+    for (id, date, duration, performance, shape) in rows:
+        excercises = get_excercises(db, id)
+        note = get_note(db, id)
+
+        # Print main infor
+        minutes = 'minutes' if duration != 1 else 'minute'
         print('{:%d %b %y %H:%M}'.format(date))
         print()
-        print('Duration   : {} {}'.format(duration, minutes))
-        print('Shape      :', shape)
-        print('Performance:', performance)
+        print(Fore.BLUE + 'Duration   :', '{} {}'.format(duration, minutes))
+        print(Fore.BLUE + 'Shape      :', shape)
+        print(Fore.BLUE + 'Performance:', performance)
+
+        # Print excercises if there are any
         if (len(excercises) > 0):
-            print('│')
-            print('└── Excercises:')
+            print()
+            print(Fore.GREEN + 'Excercises:')
             for i in range(len(excercises)):
                 if (i < len(excercises)-1):
-                    print('    ├───', excercises[i])
+                    print('├───', excercises[i])
                 else:
-                    print('    └───', excercises[i])
-        print('-------------------------')
+                    print('└───', excercises[i])
+
+        # Print the note if it exists
+        if (note is not None):
+            goal = note[0]
+            refl = note[1]
+            print()
+            print(Fore.YELLOW + 'Note:')
+            print('├─── Goal: ')
+            print(helper.wrap_indent(goal, 5, '│'))
+            print('│')
+            print('└─── Reflection:')
+            print(helper.wrap_indent(refl, 5))
+        print('-'*helper.terminal_width())
     print()
 
 
-def getExcercises(db, id):
+# Get all the excercises belonging to a workout with ID wo_id
+def get_excercises(db, wo_id: int) -> list:
     excercises = []
     cursor = db.cursor()
     cursor.execute("SELECT Excercise.Name " +
                    "FROM Workout " +
                    "NATURAL JOIN ExcerciseInWorkout " +
                    "NATURAL JOIN Excercise " +
-                   "WHERE WorkoutID = {}".format(id))
+                   "WHERE WorkoutID = {};".format(wo_id))
     rows = cursor.fetchall()
     for row, in rows:
         excercises += [row]
     return excercises
 
 
-def deleteWorkout(db):
+# Get the note belonging to the workout with ID wo_id.
+# Returns the goal text and the reflection text if the note exists,
+# otherwise None
+def get_note(db, wo_id: int):
+    cursor = db.cursor()
+    cursor.execute("SELECT * " +
+                   "FROM ExcerciseNote " +
+                   "WHERE WorkoutID = {};".format(wo_id))
+    row = cursor.fetchone()
+    if (row is not None):
+        (_, goal, refl) = row
+        return (goal, refl)
+    return None
+
+
+# Delete a workout from the database
+def delete_workout(db):
     cursor = db.cursor()
     query = "SELECT * FROM Workout;"
     cursor.execute(query)
-    print('----------------------------------------')
+    print('-'*helper.terminal_width())
     print('Which workout would you like to delete?')
     ids = []
     rows = cursor.fetchall()
@@ -159,17 +248,23 @@ def deleteWorkout(db):
         ids += [wid]
         print('ID {}: {:%d %b %y %H:%M}'.format(wid, date))
 
-    deleteId = int(input('Select an ID: '))
+    print()
+    deleteId = input('Select an ID: ')
+    deleteId = helper.int_parse(deleteId, -1)
     if (deleteId in ids):
+        print()
         conf = input('Are you sure [Y/N]: ')
         if (conf == 'Y' or conf == 'y'):
             d = db.cursor()
             d.execute('DELETE FROM Workout ' +
-                      'WHERE WorkoutID = {}'.format(deleteId))
+                      'WHERE WorkoutID = {};'.format(deleteId))
             db.commit()
             print('Deleted workout with ID {}'.format(deleteId))
 
 
+# ------------------------------
+#             MENU
+# ------------------------------
 def chooseAction(db):
     options = {
         0: 'Exit',
@@ -179,15 +274,16 @@ def chooseAction(db):
     }
 
     actions = {
-        1: listWorkouts,
-        2: insertWorkout,
-        3: deleteWorkout
+        1: list_workouts,
+        2: insert_workout,
+        3: delete_workout
     }
 
     for (index, option) in options.items():
         print('{}: {}'.format(index, option))
-    print('-------------------------')
+    print('-'*helper.terminal_width())
     action = input('Select an action: ')
+    print()
     try:
         action = int(action)
     except Exception:
@@ -197,20 +293,38 @@ def chooseAction(db):
     return action
 
 
+# ------------------------------
+#             MAIN
+# ------------------------------
 def main():
     os.system('clear')
-    print('Welcome to your Workout Journal!')
-    username = input('Username: ')
-    pwd = getpass.getpass()
+    print(Fore.BLUE + """
+              Welcome to your Workout Journal!
+              --------------------------------
+
+ This program requires that you have a MySQL server running
+ on your machine. Log in using your username and password for
+ the server
+
+    """)
+    username = input(' MySQL Username: ')
+    pwd = getpass.getpass(' MySql Password: ')
+    try:
+        mydb = mysql.connector.connect(
+            host='localhost',
+            user=username,
+            passwd=pwd,
+            auth_plugin='mysql_native_password'
+        )
+    except mysql.connector.errors.ProgrammingError:
+
+        print(" Invalid credentials, exiting..")
+        sys.exit()
+
     os.system('clear')
-    mydb = mysql.connector.connect(
-        host='localhost',
-        user=username,
-        passwd=pwd,
-        auth_plugin='mysql_native_password'
-    )
-    executeScript(mydb, '../SQL/maketables.sql')
-    mydb.cursor().execute('USE WorkoutProgram')
+
+    execute_script(mydb, '../SQL/maketables.sql')
+    mydb.cursor().execute('USE WorkoutProgram;')
 
     a = 1
     while a != 0:
