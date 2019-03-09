@@ -11,10 +11,10 @@ CREATE TABLE IF NOT EXISTS Workout (
     PRIMARY KEY (WorkoutID)
 );
 
-CREATE TABLE IF NOT EXISTS Excercise (
-    ExcerciseID INT NOT NULL AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS Exercise (
+    ExerciseID INT NOT NULL AUTO_INCREMENT,
     Name VARCHAR(255),
-    PRIMARY KEY (ExcerciseID)
+    PRIMARY KEY (ExerciseID)
 );
 
 CREATE TABLE IF NOT EXISTS Device (
@@ -24,40 +24,40 @@ CREATE TABLE IF NOT EXISTS Device (
     PRIMARY KEY (DeviceID)
 );
 
-CREATE TABLE IF NOT EXISTS ExcerciseDevice (
-    ExcerciseID INT NOT NULL,
+CREATE TABLE IF NOT EXISTS ExerciseDevice (
+    ExerciseID INT NOT NULL,
     DeviceID INT NOT NULL,
     Weight INT,
     Repetitions INT,
-    PRIMARY KEY (ExcerciseID),
-    FOREIGN KEY (ExcerciseID)
-        REFERENCES Excercise(ExcerciseID)
+    PRIMARY KEY (ExerciseID),
+    FOREIGN KEY (ExerciseID)
+        REFERENCES Exercise(ExerciseID)
         ON DELETE CASCADE,
     FOREIGN KEY (DeviceID)
         REFERENCES Device(DeviceID)
 );
 
-CREATE TABLE IF NOT EXISTS ExcerciseFree (
-    ExcerciseID INT NOT NULL,
+CREATE TABLE IF NOT EXISTS ExerciseFree (
+    ExerciseID INT NOT NULL,
     Description VARCHAR(255),
-    PRIMARY KEY (ExcerciseID),
-    FOREIGN KEY (ExcerciseID)
-        REFERENCES Excercise(ExcerciseID)
+    PRIMARY KEY (ExerciseID),
+    FOREIGN KEY (ExerciseID)
+        REFERENCES Exercise(ExerciseID)
         ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS ExcerciseInWorkout (
+CREATE TABLE IF NOT EXISTS ExerciseInWorkout (
     WorkoutID INT NOT NULL,
-    ExcerciseID INT NOT NULL,
-    PRIMARY KEY (WorkoutID, ExcerciseID),
+    ExerciseID INT NOT NULL,
+    PRIMARY KEY (WorkoutID, ExerciseID),
     FOREIGN KEY (WorkoutID)
         REFERENCES Workout(WorkoutID)
         ON DELETE CASCADE,
-    FOREIGN KEY (ExcerciseID)
-        REFERENCES Excercise(ExcerciseID)
+    FOREIGN KEY (ExerciseID)
+        REFERENCES Exercise(ExerciseID)
 );
 
-CREATE TABLE IF NOT EXISTS ExcerciseNote (
+CREATE TABLE IF NOT EXISTS ExerciseNote (
     WorkoutID INT NOT NULL,
     Goal TEXT,
     Reflection TEXT,
@@ -67,21 +67,21 @@ CREATE TABLE IF NOT EXISTS ExcerciseNote (
         ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS ExcerciseGroup (
+CREATE TABLE IF NOT EXISTS ExerciseGroup (
     GroupID INT NOT NULL AUTO_INCREMENT,
     GroupName VARCHAR(255),
     PRIMARY KEY (GroupID)
 );
 
-CREATE TABLE IF NOT EXISTS ExcerciseInGroup (
+CREATE TABLE IF NOT EXISTS ExerciseInGroup (
     GroupID INT NOT NULL,
-    ExcerciseID INT NOT NULL,
-    PRIMARY KEY (GroupID, ExcerciseID),
+    ExerciseID INT NOT NULL,
+    PRIMARY KEY (GroupID, ExerciseID),
     FOREIGN KEY (GroupID)
-        REFERENCES ExcerciseGroup(GroupID)
+        REFERENCES ExerciseGroup(GroupID)
         ON DELETE CASCADE,
-    FOREIGN KEY (ExcerciseID)
-        REFERENCES Excercise(ExcerciseID)
+    FOREIGN KEY (ExerciseID)
+        REFERENCES Exercise(ExerciseID)
         ON DELETE CASCADE
 );
 

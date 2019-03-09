@@ -55,12 +55,15 @@ def insert_workout(db):
     wo_id = cursor.lastrowid
     db.commit()
 
-    # Add excercises to the workout
+    # Add exercises to the workout
     exc = input('Would you like to add som exercises?[Y/N]: ')
     while(exc == 'Y' or exc == 'y'):
         os.system('clear')
-        insert_excercise(db, wo_id)
-        exc = input('Another one?[Y/N]: ')
+        ex_id = insert_exercise(db, wo_id)
+        group = input('Would you like to add the exercise to a group?[Y/N]: ')
+        if (group == 'Y' or group == 'y'):
+            add_exercise_to_group(db, ex_id)
+        exc = input('Add another exercise?[Y/N]: ')
 
     # Add a note to the workout
     note = input('Would you like to add a note?[Y/N]: ')
@@ -69,11 +72,11 @@ def insert_workout(db):
         insert_note(db, wo_id)
 
 
-# Link a workout with an excercise
-def insert_excerciseinworkout(db, exc_id: int, wo_id: int):
+# Link a workout with an exercise
+def insert_exerciseinworkout(db, ex_id: int, wo_id: int):
     cursor = db.cursor()
-    cursor.execute("INSERT INTO ExcerciseInWorkout (WorkoutID, ExcerciseID)" +
-                   "VALUES ({},{});".format(wo_id, exc_id))
+    cursor.execute("INSERT INTO ExerciseInWorkout (WorkoutID, ExerciseID)" +
+                   "VALUES ({},{});".format(wo_id, ex_id))
     db.commit()
 
 
@@ -83,37 +86,38 @@ def insert_note(db, wo_id: int):
     goal = input('Goal of the workout:\n')
     print()
     refl = input('Reflections:\n')
-    cursor.execute("INSERT INTO ExcerciseNote (WorkoutID, Goal, Reflection)" +
+    cursor.execute("INSERT INTO ExerciseNote (WorkoutID, Goal, Reflection)" +
                    "VALUES ({}, '{}', '{}');".format(wo_id, goal, refl))
     db.commit()
 
 
-# Insert an excercise
-def insert_excercise(db, wo_id: int):
-    exc_type = input('Excercise with device [D] or without [W]?: ')
-    name = input('Name of excercise: ')
+# Insert an exercise
+def insert_exercise(db, wo_id: int):
+    ex_type = input('Exercise with device [D] or without [W]?: ')
+    name = input('Name of exercise: ')
     cursor = db.cursor()
-    cursor.execute("INSERT INTO Excercise(Name) VALUES ('{}');".format(name))
-    exc_id = cursor.lastrowid
-    if (exc_type == 'D' or exc_type == 'd'):
-        insert_excerciseondevice(db, exc_id)
+    cursor.execute("INSERT INTO Exercise(Name) VALUES ('{}');".format(name))
+    ex_id = cursor.lastrowid
+    if (ex_type == 'D' or ex_type == 'd'):
+        insert_exerciseondevice(db, ex_id)
     else:
-        insert_excercisefree(db, exc_id)
-    insert_excerciseinworkout(db, exc_id, wo_id)
+        insert_exercisefree(db, ex_id)
+    insert_exerciseinworkout(db, ex_id, wo_id)
+    return ex_id
 
 
-# Insert an excercise performed on a device
-def insert_excerciseondevice(db, exc_id: int):
+# Insert an exercise performed on a device
+def insert_exerciseondevice(db, ex_id: int):
     cursor = db.cursor()
     cursor.execute("SELECT * FROM Device;")
-    dev_ids = []
     rows = cursor.fetchall()
+    dev_ids = []
     sel_dev_id = 0
     if (rows is not None):
         print('Device:')
 
         # Print all registered devices
-        for (dev_id, dev_name, _) in cursor:
+        for (dev_id, dev_name, _) in rows:
             dev_ids += [dev_id]
             print('  ID: {}, Name: {}'.format(dev_id, dev_name))
 
@@ -143,27 +147,67 @@ def insert_excerciseondevice(db, exc_id: int):
 
         e = db.cursor()
         e.execute("INSERT INTO " +
-                  "ExcerciseDevice" +
-                  "(ExcerciseID, DeviceID, Weight, Repetitions) " +
-                  "VALUES ({},{},{},{});".format(exc_id,
+                  "ExerciseDevice" +
+                  "(ExerciseID, DeviceID, Weight, Repetitions) " +
+                  "VALUES ({},{},{},{});".format(ex_id,
                                                  sel_dev_id,
                                                  weight,
                                                  reps))
         db.commit()
 
 
-# Insert an excercise not performed on a device
-def insert_excercisefree(db, exc_id: int):
+# Insert an exercise not performed on a device
+def insert_exercisefree(db, ex_id: int):
     desc = input('Description: ')
     cursor = db.cursor()
-    cursor.execute("INSERT INTO ExcerciseFree(ExcerciseID, Description) " +
-                   "VALUES ({},'{}');".format(exc_id, desc))
+    cursor.execute("INSERT INTO ExerciseFree(ExerciseID, Description) " +
+                   "VALUES ({},'{}');".format(ex_id, desc))
+    db.commit()
+
+
+# Add an exercise to a group. The user is prompted with exisitng groups, nad
+# is given a choice to use a registered group. If the user chooses to use a
+# previously registered group, or gives a nev group the same name as an already
+# registered group, the exercise is added to the given group.
+def add_exercise_to_group(db, ex_id):
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM ExerciseGroup;")
+    rows = cursor.fetchall()
+    groups = {}
+    print('Groups:')
+    for (group_id, group_name) in rows:
+        groups[group_name] = group_id
+        print('ID: {}, Name: {}'.format(group_id, group_name))
+
+    sel_group_id = input('Select an ID, or 0 to create a new group: ')
+    sel_group_id = h.int_parse(sel_group_id, 0)
+
+    if (sel_group_id == 0):
+        group_name = input('Name of the group: ')
+        if (group_name in groups.keys()):
+            print('The group {} already exists, '.format(group_name) +
+                  'your exercise will be added to the existing group')
+            sel_group_id = groups[group_name]
+        else:
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO ExerciseGroup (GroupName) " +
+                           "VALUES ('{}')".format(group_name))
+            sel_group_id = cursor.lastrowid
+            db.commit()
+
+    cursor.execute("INSERT INTO ExerciseInGroup (GroupID, ExerciseID) " +
+                   "VALUES ({}, {})".format(sel_group_id, ex_id))
+
+    print('Inserted exercise with ' +
+          'id {} into the group {}'.format(ex_id, group_name))
+
     db.commit()
 
 
 # List all the workouts in the database
 def list_workouts(db):
-    count = input('How many of the last workouts would you like to see?: ')
+    count = input(
+        'How many of the last workouts would you like to see (default 5)?: ')
     count = h.int_parse(count, 5)
     cursor = db.cursor()
     cursor.execute("SELECT * FROM Workout " +
@@ -176,7 +220,7 @@ def list_workouts(db):
 
     # Loop through the workouts
     for (id, date, duration, performance, shape) in rows:
-        excercises = get_excercises(db, id)
+        exercises = get_exercises(db, id)
         note = get_note(db, id)
 
         # Print main infor
@@ -187,15 +231,15 @@ def list_workouts(db):
         print(Fore.BLUE + 'Shape:      ', shape)
         print(Fore.BLUE + 'Performance:', performance)
 
-        # Print excercises if there are any
-        if (len(excercises) > 0):
+        # Print exercises if there are any
+        if (len(exercises) > 0):
             print()
-            print(Fore.GREEN + 'Excercises:')
-            for i in range(len(excercises)):
-                if (i < len(excercises)-1):
-                    print('├───', excercises[i])
+            print(Fore.GREEN + 'exercises:')
+            for i in range(len(exercises)):
+                if (i < len(exercises)-1):
+                    print('├───', exercises[i])
                 else:
-                    print('└───', excercises[i])
+                    print('└───', exercises[i])
 
         # Print the note if it exists
         if (note is not None):
@@ -212,28 +256,27 @@ def list_workouts(db):
     print()
 
 
-# Get all the excercises belonging to a workout with ID wo_id
-def get_excercises(db, wo_id: int) -> list:
-    excercises = []
+# Get all the exercises belonging to a workout with ID wo_id
+def get_exercises(db, wo_id: int) -> list:
+    exercises = []
     cursor = db.cursor()
-    cursor.execute("SELECT Excercise.Name " +
+    cursor.execute("SELECT Exercise.Name " +
                    "FROM Workout " +
-                   "NATURAL JOIN ExcerciseInWorkout " +
-                   "NATURAL JOIN Excercise " +
+                   "NATURAL JOIN ExerciseInWorkout " +
+                   "NATURAL JOIN Exercise " +
                    "WHERE WorkoutID = {};".format(wo_id))
     rows = cursor.fetchall()
     for row, in rows:
-        excercises += [row]
-    return excercises
+        exercises += [row]
+    return exercises
 
 
-# Get the note belonging to the workout with ID wo_id.
-# Returns the goal text and the reflection text if the note exists,
-# otherwise None
+# Get the note belonging to the workout with ID wo_id.  Returns the goal text
+# and the reflection text if the note exists, otherwise None.
 def get_note(db, wo_id: int):
     cursor = db.cursor()
     cursor.execute("SELECT * " +
-                   "FROM ExcerciseNote " +
+                   "FROM ExerciseNote " +
                    "WHERE WorkoutID = {};".format(wo_id))
     row = cursor.fetchone()
     if (row is not None):
@@ -242,7 +285,7 @@ def get_note(db, wo_id: int):
     return None
 
 
-# Delete a workout from the database
+# Delete a workout from the database.
 def delete_workout(db):
     cursor = db.cursor()
     query = "SELECT * FROM Workout;"
@@ -269,6 +312,52 @@ def delete_workout(db):
             print('Deleted workout with ID {}'.format(deleteId))
 
 
+# Get all devices, sorted by most used ascending.
+def show_devices(db):
+    cursor = db.cursor()
+    cursor.execute("SELECT Device.Name, COUNT(Device.DeviceID) AS Uses " +
+                   "FROM ExerciseDevice NATURAL JOIN Device " +
+                   "GROUP BY DeviceID " +
+                   "ORDER BY Uses DESC")
+    rows = cursor.fetchall()
+    print('Most used devices: ')
+    for (device_name, uses) in rows:
+        times = 'time' if uses == 1 else 'times'
+        print("├── {}, used {} {}".format(device_name, uses, times))
+
+
+# Show all groups of exercises, then show all exercises in a given group
+def show_groups(db):
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM ExerciseGroup;")
+    rows = cursor.fetchall()
+    print(Fore.RED + 'Groups:')
+    group_ids = {}
+    for (group_id, group_name) in rows:
+        group_ids[group_id] = group_name
+        print('├── ID: {}, Name: '.format(group_id) +
+              Fore.BLUE + '{}'.format(group_name))
+    print()
+    sel_group_id = input('Select an ID to show exercises in the given group: ')
+    sel_group_id = h.int_parse(sel_group_id, 0)
+
+    if (sel_group_id in group_ids.keys()):
+        cursor = db.cursor()
+        cursor.execute("SELECT Exercise.Name " +
+                       "FROM ExerciseGroup " +
+                       "NATURAL JOIN ExerciseInGroup " +
+                       "NATURAL JOIN Exercise " +
+                       "WHERE " +
+                       "ExerciseGroup.GroupID = {}".format(sel_group_id))
+
+        print()
+        rows = cursor.fetchall()
+        print('Exercises in group ' + Fore.BLUE +
+              group_ids[sel_group_id] + ':')
+        for ex_name, in rows:
+            print('├── ' + Fore.GREEN + ex_name)
+
+
 # ------------------------------
 #             MENU
 # ------------------------------
@@ -277,13 +366,17 @@ def chooseAction(db):
         0: 'Exit',
         1: 'Show workouts',
         2: 'Insert a workout',
-        3: 'Delete a workout'
+        3: 'Delete a workout',
+        4: 'Show most used devices',
+        5: 'Show exercise groups'
     }
 
     actions = {
         1: list_workouts,
         2: insert_workout,
-        3: delete_workout
+        3: delete_workout,
+        4: show_devices,
+        5: show_groups
     }
 
     for (index, option) in options.items():
@@ -318,7 +411,7 @@ def main():
 
     """)
     username = input(' MySQL Username: ')
-    pwd = getpass.getpass(' MySql Password: ')
+    pwd = getpass.getpass(' MySQL Password: ')
     try:
         mydb = mysql.connector.connect(
             host='localhost',
