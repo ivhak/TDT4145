@@ -56,7 +56,7 @@ def insert_workout(db):
     db.commit()
 
     # Add exercises to the workout
-    exc = input('Would you like to add som exercises?[Y/N]: ')
+    exc = input('Would you like to add some exercises?[Y/N]: ')
     while(exc == 'Y' or exc == 'y'):
         os.system('clear')
         ex_id = insert_exercise(db, wo_id)
@@ -165,9 +165,9 @@ def insert_exercisefree(db, ex_id: int):
     db.commit()
 
 
-# Add an exercise to a group. The user is prompted with exisitng groups, nad
+# Add an exercise to a group. The user is prompted with existing groups, and
 # is given a choice to use a registered group. If the user chooses to use a
-# previously registered group, or gives a nev group the same name as an already
+# previously registered group, or gives a new group the same name as an already
 # registered group, the exercise is added to the given group.
 def add_exercise_to_group(db, ex_id):
     cursor = db.cursor()
