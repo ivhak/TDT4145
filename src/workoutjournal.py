@@ -5,6 +5,7 @@ import mysql.connector
 import getpass
 import sys
 import os
+import time
 import helper as h
 from colorama import Fore, init
 init(autoreset=True)
@@ -234,7 +235,7 @@ def list_workouts(db):
         # Print exercises if there are any
         if (len(exercises) > 0):
             print()
-            print(Fore.GREEN + 'exercises:')
+            print(Fore.GREEN + 'Exercises:')
             for i in range(len(exercises)):
                 if (i < len(exercises)-1):
                     print('├───', exercises[i])
@@ -418,9 +419,9 @@ def main():
             auth_plugin='mysql_native_password'
         )
     except mysql.connector.errors.ProgrammingError:
-
-        print(" Something went wrong, exiting ...")
-        sys.exit()
+        print(" Something went wrong, try again")
+        time.sleep(2)
+        main()
 
     os.system('clear')
 
