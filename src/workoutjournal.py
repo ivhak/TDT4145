@@ -384,12 +384,10 @@ def chooseAction(db):
 
     print('-'*h.terminal_width())
     action = input('Select an action: ')
+    action = h.int_parse(action, -1)
     print()
-    try:
-        action = int(action)
-    except Exception:
-        action = -1
     if(action not in [-1, 0]):
+        # Execute the chosen method
         actions[action](db)
     return action
 
@@ -400,8 +398,8 @@ def chooseAction(db):
 def main():
     os.system('clear')
     print(Fore.BLUE + """
-                     Welcome to your Workout Journal!
-                     --------------------------------
+                      Welcome to your Workout Journal!
+                      --------------------------------
 
  This program requires that you have a MySQL server running on your machine.
  Log in using your username and password for the server. Make sure the server

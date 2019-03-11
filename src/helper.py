@@ -1,8 +1,8 @@
 import textwrap
-import sys
 import os
 
-# Wrap text at terminal_width -20 and indent it an amount.
+
+# Wrap text at terminal_width - 20 and indent it an amount.
 def wrap_indent(text, amount, first=' ', ch=' '):
     width = terminal_width() - 20
     width = width if width > 0 else 60
@@ -25,11 +25,11 @@ def str_parse(text, selection, default):
         return text
     return default
 
+
+# Return the width of the terminal, defaults to 80 if an error occurs.
 def terminal_width():
     try:
         columns, _ = os.get_terminal_size()
     except OSError:
         columns = 80
     return columns
-
-
