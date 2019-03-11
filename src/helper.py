@@ -1,5 +1,10 @@
 import textwrap
+import sys
 import os
+
+# ---------------------
+#    Helper methods
+# ---------------------
 
 
 # Wrap text at terminal_width - 20 and indent it an amount.
@@ -33,3 +38,58 @@ def terminal_width():
     except OSError:
         columns = 80
     return columns
+
+
+# This makes it possible to inculde the sql script when making a standalone
+# executable with PyInstaller
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.environ.get("_MEIPASS2", os.path.abspath("."))
+    return os.path.join(base_path, relative_path)
+
+
+# Prints the menu in two columns
+def print_menu(menu):
+    if (len(menu) % 2 == 1):
+        menu += ['']
+
+    longest = max([len(menu[i]) for i in range(0, len(menu)//2)])
+
+    for i in range(len(menu)//2):
+
+        # 1: <- i  4: <- next_index
+        # 2: ....  5: ...
+        # 3: ....  6: ...
+        # 4 = 6 // 2 + 1
+        next_index = len(menu)//2 + i
+
+        # Add spacing between the two colums so that everything is aligned
+        spaces = ' '*(longest - len(menu[i])) + '\t'
+
+        # Add the first menu item.
+        line = str(i) + ': ' + menu[i] + spaces
+
+        # Don't print the second column if the element is an empty string
+        if (menu[next_index] != ''):
+            # Add the second menu item
+            line += str(next_index) + ': ' + menu[next_index]
+
+        print(line)
+
+
+# Execute an SQL-script
+def execute_script(db, filename):
+    cursor = db.cursor()
+    with open(resource_path(filename), 'r') as f:
+        sqlFile = f.read()
+        f.close()
+
+    sqlCommands = sqlFile.split(';')
+
+    for command in sqlCommands:
+        try:
+            cursor.execute(command)
+        except Exception:
+            pass
