@@ -91,7 +91,7 @@ def insert_note(db, wo_id: int):
     os.system('clear')
     goal = input('Goal of the workout:\n')
     print()
-    refl = input('Reflections:\n')
+    refl = input('Reflections/Thoughts:\n')
     cursor.execute("INSERT INTO ExerciseNote (WorkoutID, Goal, Reflection)" +
                    "VALUES ({}, '{}', '{}');".format(wo_id, goal, refl))
     db.commit()
@@ -250,13 +250,13 @@ def delete_workout(db):
     os.system('clear')
     if (len(rows) > 0):
         print('Which workout would you like to delete?')
-        print('-'*h.terminal_width())
+        print('─'*h.terminal_width())
         ids = []
         for(wid, date, _, _, _) in rows:
             ids += [wid]
             print('ID {}: {:%d %b %y %H:%M}'.format(wid, date))
 
-        print('-'*h.terminal_width())
+        print('─'*h.terminal_width())
         print()
         deleteId = input('Select an ID: ')
         deleteId = h.int_parse(deleteId, -1)
@@ -290,7 +290,7 @@ def list_workouts(db):
     if (len(rows) > 0):
         # Print header
         print(Fore.RED + 'Workouts:')
-        print('-'*h.terminal_width())
+        print('─'*h.terminal_width())
 
         # Loop through the workouts
         for (id, date, duration, performance, shape) in rows:
@@ -303,8 +303,8 @@ def list_workouts(db):
             print()
             print(Fore.BLUE + 'Duration:   ',
                   '{} {}'.format(duration, minutes))
-            print(Fore.BLUE + 'Shape:      ', shape + '/10')
             print(Fore.BLUE + 'Performance:', performance + '/10')
+            print(Fore.BLUE + 'Shape:      ', shape + '/10')
 
             # Print exercises if there are any, tree style
             if (len(exercises) > 0):
@@ -325,9 +325,9 @@ def list_workouts(db):
                 print('├─── ' + Style.BRIGHT + 'Goal: ')
                 print(h.wrap_indent(goal, 5, '│'))
                 print('│')
-                print('└─── ' + Style.BRIGHT + 'Reflection:')
+                print('└─── ' + Style.BRIGHT + 'Reflections/Thoughts:')
                 print(h.wrap_indent(refl, 5))
-            print('-'*h.terminal_width())
+            print('─'*h.terminal_width())
         print()
     else:
         print('No workouts logged.')
@@ -425,7 +425,7 @@ def chooseAction(db):
     }
 
     h.print_menu(menu)
-    print('-'*h.terminal_width())
+    print('─'*h.terminal_width())
     action = input('Select an action: ')
     action = h.int_parse(action, -1)
     print()

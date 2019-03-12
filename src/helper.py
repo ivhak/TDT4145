@@ -32,6 +32,7 @@ def str_parse(text, selection, default):
 
 
 # Return the width of the terminal, defaults to 80 if an error occurs.
+# To be used when wrapping text and printing horisontal lines.
 def terminal_width():
     try:
         columns, _ = os.get_terminal_size()
@@ -83,12 +84,12 @@ def print_menu(menu):
 def execute_script(db, filename):
     cursor = db.cursor()
     with open(resource_path(filename), 'r') as f:
-        sqlFile = f.read()
+        sql_file = f.read()
         f.close()
 
-    sqlCommands = sqlFile.split(';')
+    sql_commands = sql_file.split(';')
 
-    for command in sqlCommands:
+    for command in sql_commands:
         try:
             cursor.execute(command)
         except Exception:
