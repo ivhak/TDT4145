@@ -1,13 +1,13 @@
-#!/usr/local/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import mysql.connector
-import getpass
-import sys
-import os
-import time
-import helper as h
 from colorama import Fore, Style, init
+import helper as h
+import time
+import os
+import sys
+import getpass
+import mysql.connector
 init(autoreset=True)
 
 
@@ -77,14 +77,6 @@ def insert_workout(db):
         insert_note(db, wo_id)
 
 
-# Link a workout with an exercise
-def insert_exerciseinworkout(db, ex_id: int, wo_id: int):
-    cursor = db.cursor()
-    cursor.execute("INSERT INTO ExerciseInWorkout (WorkoutID, ExerciseID)" +
-                   "VALUES ({},{});".format(wo_id, ex_id))
-    db.commit()
-
-
 # Insert a note belonging to a workout with ID wo_id
 def insert_note(db, wo_id: int):
     cursor = db.cursor()
@@ -110,6 +102,14 @@ def insert_exercise(db, wo_id: int):
         insert_exercisefree(db, ex_id)
     insert_exerciseinworkout(db, ex_id, wo_id)
     return ex_id
+
+
+# Link a workout with an exercise
+def insert_exerciseinworkout(db, ex_id: int, wo_id: int):
+    cursor = db.cursor()
+    cursor.execute("INSERT INTO ExerciseInWorkout (WorkoutID, ExerciseID)" +
+                   "VALUES ({},{});".format(wo_id, ex_id))
+    db.commit()
 
 
 # Insert an exercise performed on a device
@@ -406,14 +406,14 @@ def list_groups(db):
 # ------------------------------
 #             MENU
 # ------------------------------
-def chooseAction(db):
+def choose_action(db):
     menu = [
         'Exit',
         'Show workouts',
         'Insert a workout',
         'Delete a workout',
         'Show most used devices',
-        'Show excercise group'
+        'Show excercise groups'
     ]
 
     actions = {
@@ -441,19 +441,19 @@ def chooseAction(db):
 def main():
     os.system('clear')
     print(Fore.BLUE + """
-                      Welcome to your Workout Journal!
-                      --------------------------------
+                     Welcome to your Workout Journal!
+                     --------------------------------
 
- This program requires that you have a MySQL server running on your machine.
- Log in using your username and password for the server. Make sure the server
- is running.
+This program requires that you have a MySQL server running on your machine.
+Log in using your username and password for the server. Make sure the server
+is running.
 
- This program is designed to be a journal where you can log your workouts.
+This program is designed to be a journal where you can log your workouts.
 
-    """)
+   """)
     try:
-        username = input(' MySQL Username: ')
-        pwd = getpass.getpass(' MySQL Password: ')
+        username = input('MySQL Username: ')
+        pwd = getpass.getpass('MySQL Password: ')
     except KeyboardInterrupt:
         print('\n Bye!')
         sys.exit(0)
@@ -477,7 +477,7 @@ def main():
 
     a = 1
     while a != 0:
-        a = chooseAction(mydb)
+        a = choose_action(mydb)
         if(a != 0 and a != -1):
             input('Press Enter to continue...')
         os.system('clear')
