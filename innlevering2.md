@@ -109,12 +109,19 @@ Denne metoden lister brukerens mest brukte apparater (_use-case 5_).
 Apparatene listes med navn, og antall ganger brukt, sortert fra mest til minst.
 
 #### `def list_groups(db)`
-Denne metoden listen brukerens loggførte øvelsesgrupper (_use-case 4_). Hver av
+Denne metoden lister brukerens loggførte øvelsesgrupper (_use-case 4_). Hver av
 gruppene listes med navn og id. Brukeren kan så se alle øvelsene i en gruppe
 ved å skrive inn id'en.
 
+#### `def list_exercise_results(db)` 
+Denne metoden gir brukeren informasjon om resultatet for en øvelse i et gitt
+tidsintervall (_use-case 3_). Øvelsene har ikke noe eget mål på prestasjon, men treningsøktene
+som øvelsen inngår i har det. Brukeren velger en øvelse og et tidsintervall, og
+får se hvordan formen og prestasjonen var på treningsøktene hvor øvelsen ble
+utført, i det gitte tidsintervallet.
+
 #### `def choose_action(db)`
-Dene metoden fungerer som en meny. Brukeren får følgende valg:
+Denne metoden fungerer som en meny. Brukeren får følgende valg:
 
 0. Exit
 1. Show workouts
@@ -122,14 +129,16 @@ Dene metoden fungerer som en meny. Brukeren får følgende valg:
 3. Delete a workout
 4. Show most used devices
 5. Show excercise groups
+6. List exercise results
 
-Hver av valgene 1 til 5 er knyttet til sin tilhørende funksjon:
+Hver av valgene 1 til 6 er knyttet til sin tilhørende funksjon:
 
 * Show workouts → `list_workouts` 
 * Insert a workout → `insert_workout` 
 * Delete a wokrout → `delete_workout` 
 * Show most used devices → `list_devices` 
 * Show exercise groups → `list_groups` 
+* List exercise results → `list_exercise_results` 
 
 Når brukeren velger et tall, kalles den tilhørende funksjonen.
 
@@ -149,12 +158,15 @@ lengde `terminal_width() - 20`, slik at det er lesbart uavhengig av bredden på
 terminalen som programmet kjøres i.
 
 #### `def int_parse(text, default=0)`
-Denne metoden brukes for å verifisre at brukerinput er et tall. Dersom det ikke
+Denne metoden brukes for å verifisere at brukerinput er et tall. Dersom det ikke
 er det, returneres en default verdi.
 
 #### `def str_parse(text, selection, default)`
 Samme som `int_parse`. Brukerinput sammenlignes mot en ønsket type
 (`selection`), og en default verdi returneres dersom det ikke er en match.
+
+#### `def date_parse(text)` 
+Sjekker at brukerinput for en dato er på formen `yyyy-mm-dd`.
 
 #### `def terminal_width()`
 Denne metoden finner bredden av terminalen som programmet kjøres i. Brukes i

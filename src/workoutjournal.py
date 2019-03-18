@@ -333,7 +333,58 @@ def list_workouts(db):
         print('No workouts logged.')
 
 
-# Get all devices, sorted by most used ascending.
+# Lists the performance and shape of the workout where an exercise was done, in
+# a given time interval.
+def list_exercise_results(db):
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM Exercise;")
+    rows = cursor.fetchall()
+    ex_ids = []
+    sel_ex_id = 0
+    if (len(rows) > 0):
+        print("Which exercise would you like to see the results for?")
+        for (ex_id, name) in rows:
+            ex_ids += [ex_id]
+            print('{}: {}'.format(ex_id, name))
+        sel_ex_id = h.int_parse(input("ID: "), 0)
+        if (ex_id in ex_ids):
+            start_date = input("Select start date (yyyy-mm-dd): ")
+            while(not h.date_parse(start_date)):
+                print("Invalid date. try again...")
+                start_date = input("Select start date (yyyy-mm-dd): ")
+
+            end_date = input("Select end date (yyyy-mm-dd): ")
+            while(not h.date_parse(end_date)):
+                print("Invalid date. try again...")
+                end_date = input("Select end date (yyyy-mm-dd): ")
+
+            cursor = db.cursor()
+            cursor.execute("SELECT WorkoutDate, Exercise.Name, Performance, Shape " +
+                           "FROM Workout NATURAL JOIN Exercise " +
+                           "WHERE WorkoutID = {} ".format(sel_ex_id) +
+                           "AND CAST('{} 23:59:59' as datetime) >= WorkoutDate ".format(end_date) +
+                           "AND CAST('{} 00:00:00' as datetime) <= WorkoutDate;".format(start_date))
+            rows = cursor.fetchall()
+            (_, name, _, _) = rows[0]
+            print('\nResults of workout ' + Fore.GREEN +
+                  name + Fore.RESET + ':')
+            length = len(rows)
+            i = 0
+            for (date, _, performance, shape) in rows:
+                i += 1
+                prefix = '├──' if i < length else '└──'
+                print(prefix + Fore.CYAN + 'Date: ' + Fore.RESET + str(date))
+                print('   ├── ' + Fore.BLUE + 'Performance:' +
+                      Fore.RESET + ' {}'.format(performance))
+                print('   └── ' + Fore.YELLOW + 'Shape:' +
+                      Fore.RESET + '       {}'.format(performance))
+            print()
+
+    else:
+        print('No logged exercises')
+
+
+# Get all devices, sorted by most used descending.
 def list_devices(db):
     cursor = db.cursor()
     cursor.execute("SELECT Device.Name, COUNT(Device.DeviceID) AS Uses " +
@@ -413,7 +464,8 @@ def choose_action(db):
         'Insert a workout',
         'Delete a workout',
         'Show most used devices',
-        'Show excercise groups'
+        'Show exercise groups',
+        'List exercise results'
     ]
 
     actions = {
@@ -421,7 +473,8 @@ def choose_action(db):
         2: insert_workout,
         3: delete_workout,
         4: list_devices,
-        5: list_groups
+        5: list_groups,
+        6: list_exercise_results
     }
 
     h.print_menu(menu)
