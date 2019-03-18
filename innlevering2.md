@@ -180,4 +180,4 @@ En hjelpemetode for å printe menyen (`choose_action`) i to kolonner.
 
 #### `def execute_script(db, filename)`
 Utfører SQL-skriptet `filename`. Brukes for å opprette alle tabeller ved å
-kalles funksjonen med `maketables.sql`-skriptet fra innlevering 1.
+kalle funksjonen med `maketables.sql`-skriptet fra innlevering 1.

@@ -32,5 +32,5 @@ exe = EXE(pyz,
           console=True )
 
 a.datas += [
-    ("/Users/iverhakonsen/Documents/Skole/2.vår/Datamodellering og databasesystemer/Databaseprosjekt/src/SQL/maketables.sql", "SQL/maketables.sql", "DATA")
+    ("/Users/iverhakonsen/Documents/Skole/2.vår/Datamodellering og databasesystemer/Databaseprosjekt/src/maketables.sql", "maketables.sql", "DATA")
 ]
