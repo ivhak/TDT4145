@@ -168,6 +168,9 @@ Samme som `int_parse`. Brukerinput sammenlignes mot en ønsket type
 #### `def date_parse(text)` 
 Sjekker at brukerinput for en dato er på formen `yyyy-mm-dd`.
 
+#### `def time_parse(text)` 
+Sjekker at brukerinput for et tidspunkt er på formen `hh:mm`.
+
 #### `def terminal_width()`
 Denne metoden finner bredden av terminalen som programmet kjøres i. Brukes i
 `wrap_indent`, samt for å printe separasjonslinjer.

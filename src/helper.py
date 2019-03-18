@@ -40,6 +40,14 @@ def date_parse(text):
     return False
 
 
+def time_parse(text):
+    time_regex = r"^[\d]{2}:[\d]{2}$"
+    match = re.match(time_regex, text)
+    if match:
+        return True
+    return False
+
+
 # Return the width of the terminal, defaults to 80 if an error occurs.
 # To be used when wrapping text and printing horisontal lines.
 def terminal_width():

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from colorama import Fore, Style, init
+from datetime import datetime
 import helper as h
 import time
 import os
@@ -44,18 +45,29 @@ def insert_workout(db):
             shape = input("Shape (1-10): ")
             shape = h.int_parse(shape, -1)
 
+        # Get user input on the date. Defaults to now.
+        print()
+        date = input("Date (yyyy-mm-dd [Press Enter for current date]): ")
+        if (not date):
+            date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            while(not h.date_parse(date)):
+                date = input('Invalid date, try again... : ')
+            time = input('Time (hh:mm): ')
+            while(not h.time_parse(time)):
+                time = input('Invalid time, try again... : ')
+
+            date += ' ' + time + ':00'
+
     # <Ctrl-C> will terminate the insertion of the workout and take the user
     # back to the menu
     except KeyboardInterrupt:
         print('\nInsertion terminated')
         return
 
-    query = ("INSERT INTO Workout(Duration, Performance, Shape) " +
-             "VALUES ({},'{}','{}');".format(duration, performance, shape))
-    try:
-        cursor.execute(query)
-    except Exception:
-        pass
+    query = ("INSERT INTO Workout(WorkoutDate, Duration, Performance, Shape) " +
+             "VALUES ('{}', {},'{}','{}');".format(date, duration, performance, shape))
+    cursor.execute(query)
 
     wo_id = cursor.lastrowid
     db.commit()
@@ -336,28 +348,37 @@ def list_workouts(db):
 # Lists the performance and shape of the workout where an exercise was done, in
 # a given time interval.
 def list_exercise_results(db):
+    # Get all logged exercises
     cursor = db.cursor()
     cursor.execute("SELECT * FROM Exercise;")
     rows = cursor.fetchall()
+
     ex_ids = []
     sel_ex_id = 0
+
     if (len(rows) > 0):
+        # Print the logged exercises with name and id.
         print("Which exercise would you like to see the results for?")
         for (ex_id, name) in rows:
             ex_ids += [ex_id]
             print('{}: {}'.format(ex_id, name))
         sel_ex_id = h.int_parse(input("ID: "), 0)
+
         if (ex_id in ex_ids):
+
+            # Start date
             start_date = input("Select start date (yyyy-mm-dd): ")
             while(not h.date_parse(start_date)):
                 print("Invalid date. try again...")
                 start_date = input("Select start date (yyyy-mm-dd): ")
 
+            # End date
             end_date = input("Select end date (yyyy-mm-dd): ")
             while(not h.date_parse(end_date)):
                 print("Invalid date. try again...")
                 end_date = input("Select end date (yyyy-mm-dd): ")
 
+            # Get the peformance and shape in the given tim interval
             cursor = db.cursor()
             cursor.execute("SELECT WorkoutDate, Exercise.Name, Performance, Shape " +
                            "FROM Workout NATURAL JOIN Exercise " +
@@ -365,18 +386,22 @@ def list_exercise_results(db):
                            "AND CAST('{} 23:59:59' as datetime) >= WorkoutDate ".format(end_date) +
                            "AND CAST('{} 00:00:00' as datetime) <= WorkoutDate;".format(start_date))
             rows = cursor.fetchall()
+
             (_, name, _, _) = rows[0]
             print('\nResults of workout ' + Fore.GREEN +
                   name + Fore.RESET + ':')
             length = len(rows)
             i = 0
+
+            # Print the results, tree style
             for (date, _, performance, shape) in rows:
                 i += 1
-                prefix = '├──' if i < length else '└──'
-                print(prefix + Fore.CYAN + 'Date: ' + Fore.RESET + str(date))
-                print('   ├── ' + Fore.BLUE + 'Performance:' +
+                prefix1 = '├──' if i < length else '└──'
+                prefix2 = '│' if i < length else ' '
+                print(prefix1 + Fore.CYAN + 'Date: ' + Fore.RESET + str(date))
+                print(prefix2 + '  ├── ' + Fore.BLUE + 'Performance:' +
                       Fore.RESET + ' {}'.format(performance))
-                print('   └── ' + Fore.YELLOW + 'Shape:' +
+                print(prefix2 + '  └── ' + Fore.YELLOW + 'Shape:' +
                       Fore.RESET + '       {}'.format(performance))
             print()
 
@@ -525,7 +550,7 @@ This program is designed to be a journal where you can log your workouts.
 
     os.system('clear')
 
-    h.execute_script(mydb, 'SQL/maketables.sql')
+    h.execute_script(mydb, 'maketables.sql')
     mydb.cursor().execute('USE WorkoutProgram;')
 
     a = 1
