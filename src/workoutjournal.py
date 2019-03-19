@@ -103,16 +103,31 @@ def insert_note(db, wo_id: int):
 
 # Insert an exercise
 def insert_exercise(db, wo_id: int):
-    ex_type = input('Exercise with device [D] or without [W]?: ')
-    name = input('Name of exercise: ')
-    cursor = db.cursor()
-    cursor.execute("INSERT INTO Exercise(Name) VALUES ('{}');".format(name))
-    ex_id = cursor.lastrowid
-    if (ex_type == 'D' or ex_type == 'd'):
-        insert_exerciseondevice(db, ex_id)
-    else:
-        insert_exercisefree(db, ex_id)
-    insert_exerciseinworkout(db, ex_id, wo_id)
+    prev = input('Would you like to add an already logged exercise?[Y/N]: ')
+    sel_ex_id = 0
+    if (prev == 'y' or prev == 'Y'):
+        cursor = db.cursor()
+        cursor.execute("SELECT * FROM Exercise;")
+        rows = cursor.fetchall()
+        ex_ids = []
+        for (ex_id, name) in rows:
+            ex_ids += [ex_id]
+            print('ID {}: {}'.format(ex_id, name))
+        sel_ex_id = h.int_parse(input("Which ID?(0 to add new): "), 0)
+
+    elif (sel_ex_id == 0):
+        ex_type = input('Exercise with device [D] or without [W]?: ')
+        name = input('Name of exercise: ')
+        cursor = db.cursor()
+        cursor.execute(
+            "INSERT INTO Exercise(Name) VALUES ('{}');".format(name))
+        sel_ex_id = cursor.lastrowid
+        if (ex_type == 'D' or ex_type == 'd'):
+            insert_exerciseondevice(db, sel_ex_id)
+        else:
+            insert_exercisefree(db, sel_ex_id)
+
+    insert_exerciseinworkout(db, sel_ex_id, wo_id)
     return ex_id
 
 
@@ -364,7 +379,7 @@ def list_exercise_results(db):
             print('{}: {}'.format(ex_id, name))
         sel_ex_id = h.int_parse(input("ID: "), 0)
 
-        if (ex_id in ex_ids):
+        if (sel_ex_id in ex_ids):
 
             # Start date
             start_date = input("Select start date (yyyy-mm-dd): ")
@@ -381,23 +396,24 @@ def list_exercise_results(db):
             # Get the peformance and shape in the given tim interval
             cursor = db.cursor()
             cursor.execute("SELECT WorkoutDate, Exercise.Name, Performance, Shape " +
-                           "FROM Workout NATURAL JOIN Exercise " +
-                           "WHERE WorkoutID = {} ".format(sel_ex_id) +
+                           "FROM Workout " +
+                           "NATURAL JOIN ExerciseInWorkout " +
+                           "NATURAL JOIN Exercise " +
+                           "WHERE ExerciseID = {} ".format(sel_ex_id) +
                            "AND CAST('{} 23:59:59' as datetime) >= WorkoutDate ".format(end_date) +
                            "AND CAST('{} 00:00:00' as datetime) <= WorkoutDate;".format(start_date))
             rows = cursor.fetchall()
 
-            (_, name, _, _) = rows[0]
-            print('\nResults of workout ' + Fore.GREEN +
-                  name + Fore.RESET + ':')
-            length = len(rows)
+            if (len(rows) > 0):
+                (_, name, _, _) = rows[0]
+                print('\nResults of workout ' + Fore.GREEN +
+                      name + Fore.RESET + ':')
             i = 0
-
             # Print the results, tree style
             for (date, _, performance, shape) in rows:
                 i += 1
-                prefix1 = '├──' if i < length else '└──'
-                prefix2 = '│' if i < length else ' '
+                prefix1 = '├──' if i < len(rows) else '└──'
+                prefix2 = '│' if i < len(rows) else ' '
                 print(prefix1 + Fore.CYAN + 'Date: ' + Fore.RESET + str(date))
                 print(prefix2 + '  ├── ' + Fore.BLUE + 'Performance:' +
                       Fore.RESET + ' {}'.format(performance))
