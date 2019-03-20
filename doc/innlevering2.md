@@ -10,7 +10,8 @@ Vår implementasjon av treningsdagboken er et tekstbasert program skrevet i
 Python. Programmet består av to filer: hovedprogrammet, `workoutjournal.py`, og
 en fil med hjelpemetoder, `helper.py`. Programmet er ikke objektorientert, så
 det er ingen klasser. Istedenfor er alle de forskjellige funksjonalitetene
-separert i sine egne funksjoner.
+separert i sine egne funksjoner. Løsning av hver use-case vil annoteres med
+"(_use-case x_)" der de er implementert.
 
 
 ## `workoutjournal.py` 
@@ -179,6 +180,13 @@ Sjekker at brukerinput for en dato er på formen `yyyy-mm-dd`.
 
 #### `time_parse(text)` 
 Sjekker at brukerinput for et tidspunkt er på formen `hh:mm`.
+
+#### `escape(text)` 
+Escaper ulovlige tegn slik at MySQL skjønner at det skal behandles som tekst:
+
+* `"` → `\"`
+* `'` → `\'`
+* `%` → `\% `
 
 #### `terminal_width()`
 Denne metoden finner bredden av terminalen som programmet kjøres i. Brukes i

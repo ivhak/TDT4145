@@ -32,6 +32,7 @@ def str_parse(text, selection, default):
     return default
 
 
+# Check date format
 def date_parse(text):
     date_regex = r"^[\d]{4}-[\d]{2}-[\d]{2}$"
     match = re.match(date_regex, text)
@@ -40,12 +41,25 @@ def date_parse(text):
     return False
 
 
+# Check time format
 def time_parse(text):
     time_regex = r"^[\d]{2}:[\d]{2}$"
     match = re.match(time_regex, text)
     if match:
         return True
     return False
+
+
+# Escape illegal characters
+def escape(text):
+    replacements = {
+            "'": "\\'",
+            '"': '\\"',
+            "%": "\\%"
+    }
+    for (key, replacement) in replacements.items():
+        text = text.replace(key, replacement)
+    return text
 
 
 # Return the width of the terminal, defaults to 80 if an error occurs.

@@ -18,30 +18,27 @@ def insert_workout(db):
     os.system('clear')
 
     try:
-        duration = input("Duration (minutes): ")
-        duration = h.int_parse(duration, -1)
+        duration = h.int_parse(input("Duration (minutes): "), -1)
         while (duration < 0):
             print('\nInvalid duration, try again...')
-            duration = input("Duration (minutes): ")
-            duration = h.int_parse(duration, -1)
+            duration = h.int_parse(input("Duration (minutes): "), -1)
+
+        def input_in_range(x):
+            out = h.int_parse(input(x + " (1-10): "), -1)
+            while (out not in range(1, 11)):
+                print('\nInvalid input, try again...')
+                out = h.int_parse(input(x + " (1-10): "), -1)
+            return out
 
         # Get user input of performance. While something else than a number
         # between 1 and 10 is submitted, the user is asked again.
         print()
-        perf = h.int_parse(input("Performance (1-10): "), -1)
-        while (perf not in range(1, 11)):
-            print('\nInvalid input, try again...')
-            perf = h.int_parse(input("Performance (1-10): "), -1)
+        perf = input_in_range("Performance")
 
         # Get user input of shape. While something else than a number between 1
         # and 10 is submitted, the user is asked again.
         print()
-        shape = input("Shape (1-10): ")
-        shape = h.int_parse(shape, -1)
-        while (shape not in range(1, 11)):
-            print('\nInvalid input, try again...')
-            shape = input("Shape (1-10): ")
-            shape = h.int_parse(shape, -1)
+        shape = input_in_range("Shape")
 
         # Get user input on the date. Defaults to now.
         print()
@@ -89,9 +86,9 @@ def insert_workout(db):
 def insert_note(db, wo_id: int):
     cursor = db.cursor()
     os.system('clear')
-    goal = input('Goal of the workout:\n')
+    goal = h.escape(input('Goal of the workout:\n'))
     print()
-    refl = input('Reflections/Thoughts:\n')
+    refl = h.escape(input('Reflections/Thoughts:\n'))
     cursor.execute("INSERT INTO ExerciseNote (WorkoutID, Goal, Reflection)" +
                    "VALUES ({}, '{}', '{}');".format(wo_id, goal, refl))
     db.commit()
@@ -122,17 +119,17 @@ def insert_exercise(db, wo_id=0):
             "INSERT INTO Exercise(Name) VALUES ('{}');".format(name))
         sel_ex_id = cursor.lastrowid
         if (ex_type == 'D' or ex_type == 'd'):
-            insert_exerciseondevice(db, sel_ex_id)
+            insert_exercise_on_device(db, sel_ex_id)
         else:
-            insert_exercisefree(db, sel_ex_id)
+            insert_exercise_free(db, sel_ex_id)
 
     if(wo_id != 0):
-        insert_exerciseinworkout(db, sel_ex_id, wo_id)
+        insert_exercise_in_workout(db, sel_ex_id, wo_id)
     return sel_ex_id
 
 
 # Link a workout with an exercise
-def insert_exerciseinworkout(db, ex_id: int, wo_id: int):
+def insert_exercise_in_workout(db, ex_id: int, wo_id: int):
     cursor = db.cursor()
     # Find all exercises already in the workout ...
     cursor.execute("SELECT * FROM ExerciseInWorkout " +
@@ -148,7 +145,7 @@ def insert_exerciseinworkout(db, ex_id: int, wo_id: int):
 
 
 # Insert an exercise performed on a device
-def insert_exerciseondevice(db, ex_id: int):
+def insert_exercise_on_device(db, ex_id: int):
     cursor = db.cursor()
     cursor.execute("SELECT * FROM Device;")
     rows = cursor.fetchall()
@@ -162,28 +159,26 @@ def insert_exerciseondevice(db, ex_id: int):
             dev_ids += [dev_id]
             print('  ID: {}, Name: {}'.format(dev_id, dev_name))
 
-        sel_dev_id = input('Select an ID, or press 0 to add a new one: ')
         # If sel_dev_id is not a number, default to 0
-        sel_dev_id = h.int_parse(sel_dev_id)
+        sel_dev_id = h.int_parse(
+            input('Select an ID, or press 0 to add a new one: '))
 
     # Add a new device if the user sumbits 0 or an invalid ID.
     if (sel_dev_id == 0 or sel_dev_id not in dev_ids):
         new_dev_name = input('Name of device: ')
-        nwq_dev_desc = input('Description of device: ')
+        new_dev_desc = input('Description of device: ')
         d = db.cursor()
         d.execute("INSERT INTO Device(Name, Description)" +
-                  "VALUES ('{}', '{}');".format(new_dev_name, nwq_dev_desc))
+                  "VALUES ('{}', '{}');".format(new_dev_name, new_dev_desc))
         sel_dev_id = d.lastrowid
         db.commit()
         dev_ids += [sel_dev_id]
 
-    weight = input('Weight (kg): ')
     # If weights is not a number, default to 0
-    weight = h.int_parse(weight)
+    weight = h.int_parse(input('Weight (kg): '))
 
-    reps = input('Repetitions: ')
     # If reps is not a number, default to 0
-    reps = h.int_parse(reps)
+    reps = h.int_parseinput(('Repetitions: '))
 
     e = db.cursor()
     e.execute("INSERT INTO " +
@@ -197,7 +192,7 @@ def insert_exerciseondevice(db, ex_id: int):
 
 
 # Insert an exercise not performed on a device
-def insert_exercisefree(db, ex_id: int):
+def insert_exercise_free(db, ex_id: int):
     desc = input('Description: ')
     cursor = db.cursor()
     cursor.execute("INSERT INTO ExerciseFree(ExerciseID, Description) " +
@@ -244,22 +239,24 @@ def insert_exercise_in_group(db):
                    "FROM ExerciseInGroup " +
                    "WHERE GroupID = {})".format(sel_group_id))
     rows = cursor.fetchall()
-    ex_ids = []
+
+    # Keep track off all the exercices listed
+    exs = {}
     print("Exercises:")
     for (ex_id, ex_name) in rows:
-        ex_ids += [ex_id]
+        exs[ex_id] = ex_name
         print("ID {}: {}".format(ex_id, ex_name))
 
     ex_id = h.int_parse(
         input("Which exercise would you " +
               "like add to the group {} ?: ".format(group_name)), 0)
 
-    if (ex_id != 0):
+    # Add the exercise to the group if a valid ex_id is chosen
+    if (ex_id in exs.keys()):
         cursor.execute("INSERT INTO ExerciseInGroup (GroupID, ExerciseID) " +
                        "VALUES ({}, {})".format(sel_group_id, ex_id))
-
-    print('Inserted exercise with ' +
-          'id {} into the group {}'.format(ex_id, group_name))
+        print('Inserted exercise {} into the group {}'.format(
+            exs[ex_id], group_name))
 
     db.commit()
 
@@ -310,8 +307,7 @@ def delete_workout(db):
 
         print('─'*h.terminal_width())
         print()
-        deleteId = input('Select an ID: ')
-        deleteId = h.int_parse(deleteId, -1)
+        deleteId = h.int_parse(input('Select an ID: '), -1)
         if (deleteId in ids):
             print()
             conf = input('Are you sure [Y/N]: ')
@@ -394,7 +390,6 @@ def list_exercise_results(db):
     rows = cursor.fetchall()
 
     ex_ids = []
-    sel_ex_id = 0
 
     if (len(rows) > 0):
         # Print the logged exercises with name and id.
@@ -418,7 +413,7 @@ def list_exercise_results(db):
                 print("Invalid date. try again...")
                 end_date = input("Select end date (yyyy-mm-dd): ")
 
-            # Get the peformance and shape in the given tim interval
+            # Get the peformance and shape in the given time interval
             cursor = db.cursor()
             cursor.execute("SELECT " +
                            "WorkoutDate, Exercise.Name, Performance, Shape " +
@@ -467,7 +462,6 @@ def list_devices(db):
         print('Most used devices: ')
         for i in range(len(devices)):
             name = devices[i][0]
-
             uses = devices[i][1]
             suffix = '' if uses == 1 else 's'
 
@@ -499,9 +493,8 @@ def list_groups(db):
             print('├── ID: {}, Name: '.format(group_id) +
                   Fore.BLUE + '{}'.format(group_name))
         print()
-        sel_group_id = input(
-            'Select an ID to show exercises in the given group: ')
-        sel_group_id = h.int_parse(sel_group_id, 0)
+        sel_group_id = h.int_parse(input(
+            'Select an ID to show exercises in the given group: '))
 
         if (sel_group_id in group_ids.keys()):
             cursor = db.cursor()
@@ -549,8 +542,7 @@ def choose_action(db):
 
     h.print_menu(menu)
     print('─'*h.terminal_width())
-    action = input('Select an action: ')
-    action = h.int_parse(action, -1)
+    action = h.int_parse(input('Select an action: '), -1)
     print()
     if(action in actions.keys()):
         # Execute the chosen method
