@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 from colorama import Fore, Style, init
@@ -28,12 +28,10 @@ def insert_workout(db):
         # Get user input of performance. While something else than a number
         # between 1 and 10 is submitted, the user is asked again.
         print()
-        performance = input("Performance (1-10): ")
-        performance = h.int_parse(performance, -1)
-        while (performance not in range(1, 11)):
+        perf = h.int_parse(input("Performance (1-10): "), -1)
+        while (perf not in range(1, 11)):
             print('\nInvalid input, try again...')
-            performance = input("Performance (1-10): ")
-            performance = h.int_parse(performance, -1)
+            perf = h.int_parse(input("Performance (1-10): "), -1)
 
         # Get user input of shape. While something else than a number between 1
         # and 10 is submitted, the user is asked again.
@@ -65,9 +63,10 @@ def insert_workout(db):
         print('\nInsertion terminated')
         return
 
-    query = ("INSERT INTO Workout(WorkoutDate, Duration, Performance, Shape) " +
-             "VALUES ('{}', {},'{}','{}');".format(date, duration, performance, shape))
-    cursor.execute(query)
+    cursor.execute("INSERT INTO " +
+                   "Workout(WorkoutDate, Duration, Performance, Shape) " +
+                   "VALUES " +
+                   "('{}', {},'{}','{}');".format(date, duration, perf, shape))
 
     wo_id = cursor.lastrowid
     db.commit()
@@ -76,10 +75,7 @@ def insert_workout(db):
     exc = input('Would you like to add some exercises?[Y/N]: ')
     while(exc == 'Y' or exc == 'y'):
         os.system('clear')
-        ex_id = insert_exercise(db, wo_id)
-        group = input('Would you like to add the exercise to a group?[Y/N]: ')
-        if (group == 'Y' or group == 'y'):
-            insert_exercise_in_group(db, ex_id)
+        insert_exercise(db, wo_id)
         exc = input('Add another exercise?[Y/N]: ')
 
     # Add a note to the workout
@@ -101,19 +97,22 @@ def insert_note(db, wo_id: int):
     db.commit()
 
 
-# Insert an exercise
-def insert_exercise(db, wo_id: int):
-    prev = input('Would you like to add an already logged exercise?[Y/N]: ')
+# Insert an exercise. If wo_id is not 0, the function has been called from
+# insert_workout and some extra steps are added.
+def insert_exercise(db, wo_id=0):
     sel_ex_id = 0
-    if (prev == 'y' or prev == 'Y'):
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM Exercise;")
-        rows = cursor.fetchall()
-        ex_ids = []
-        for (ex_id, name) in rows:
-            ex_ids += [ex_id]
-            print('ID {}: {}'.format(ex_id, name))
-        sel_ex_id = h.int_parse(input("Which ID?(0 to add new): "), 0)
+    if (wo_id != 0):
+        prev = input(
+            'Would you like to add an already logged exercise?[Y/N]: ')
+        if (prev == 'y' or prev == 'Y'):
+            cursor = db.cursor()
+            cursor.execute("SELECT * FROM Exercise;")
+            rows = cursor.fetchall()
+            ex_ids = []
+            for (ex_id, name) in rows:
+                ex_ids += [ex_id]
+                print('ID {}: {}'.format(ex_id, name))
+            sel_ex_id = h.int_parse(input("Which ID?(0 to add new): "), 0)
 
     elif (sel_ex_id == 0):
         ex_type = input('Exercise with device [D] or without [W]?: ')
@@ -127,16 +126,25 @@ def insert_exercise(db, wo_id: int):
         else:
             insert_exercisefree(db, sel_ex_id)
 
-    insert_exerciseinworkout(db, sel_ex_id, wo_id)
-    return ex_id
+    if(wo_id != 0):
+        insert_exerciseinworkout(db, sel_ex_id, wo_id)
+    return sel_ex_id
 
 
 # Link a workout with an exercise
 def insert_exerciseinworkout(db, ex_id: int, wo_id: int):
     cursor = db.cursor()
-    cursor.execute("INSERT INTO ExerciseInWorkout (WorkoutID, ExerciseID)" +
-                   "VALUES ({},{});".format(wo_id, ex_id))
-    db.commit()
+    # Find all exercises already in the workout ...
+    cursor.execute("SELECT * FROM ExerciseInWorkout " +
+                   "WHERE ExerciseID = {} ".format(ex_id) +
+                   "AND WorkoutID = {};".format(wo_id))
+    rows = cursor.fetchall()
+
+    # ... if the exercise is not in the workout, add it
+    if (len(rows) == 0):
+        cursor.execute("INSERT INTO ExerciseInWorkout (WorkoutID,ExerciseID)" +
+                       "VALUES ({},{});".format(wo_id, ex_id))
+        db.commit()
 
 
 # Insert an exercise performed on a device
@@ -197,11 +205,10 @@ def insert_exercisefree(db, ex_id: int):
     db.commit()
 
 
-# Add an exercise to a group. The user is prompted with existing groups, and
-# is given a choice to use a registered group. If the user chooses to use a
-# previously registered group, or gives a new group the same name as an already
-# registered group, the exercise is added to the given group.
-def insert_exercise_in_group(db, ex_id):
+# Add an exercise to a group. The user can choose to use an existing group or
+# create a new one. The user is then given a list of exercises not already in
+# the given group, and is prompted to choose one to add.
+def insert_exercise_in_group(db):
     cursor = db.cursor()
     cursor.execute("SELECT * FROM ExerciseGroup;")
     rows = cursor.fetchall()
@@ -214,8 +221,8 @@ def insert_exercise_in_group(db, ex_id):
             groups[group_name] = group_id
             print('ID: {}, Name: {}'.format(group_id, group_name))
 
-        sel_group_id = input('Select an ID, or 0 to create a new group: ')
-        sel_group_id = h.int_parse(sel_group_id, 0)
+        sel_group_id = h.int_parse(
+            input('Select an ID, or 0 to create a new group: '), 0)
 
     if (sel_group_id == 0):
         group_name = input('Name of the group: ')
@@ -230,8 +237,26 @@ def insert_exercise_in_group(db, ex_id):
             sel_group_id = cursor.lastrowid
             db.commit()
 
-    cursor.execute("INSERT INTO ExerciseInGroup (GroupID, ExerciseID) " +
-                   "VALUES ({}, {})".format(sel_group_id, ex_id))
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM Exercise " +
+                   "WHERE ExerciseID " +
+                   "NOT IN (SELECT ExerciseID " +
+                   "FROM ExerciseInGroup " +
+                   "WHERE GroupID = {})".format(sel_group_id))
+    rows = cursor.fetchall()
+    ex_ids = []
+    print("Exercises:")
+    for (ex_id, ex_name) in rows:
+        ex_ids += [ex_id]
+        print("ID {}: {}".format(ex_id, ex_name))
+
+    ex_id = h.int_parse(
+        input("Which exercise would you " +
+              "like add to the group {} ?: ".format(group_name)), 0)
+
+    if (ex_id != 0):
+        cursor.execute("INSERT INTO ExerciseInGroup (GroupID, ExerciseID) " +
+                       "VALUES ({}, {})".format(sel_group_id, ex_id))
 
     print('Inserted exercise with ' +
           'id {} into the group {}'.format(ex_id, group_name))
@@ -395,13 +420,16 @@ def list_exercise_results(db):
 
             # Get the peformance and shape in the given tim interval
             cursor = db.cursor()
-            cursor.execute("SELECT WorkoutDate, Exercise.Name, Performance, Shape " +
+            cursor.execute("SELECT " +
+                           "WorkoutDate, Exercise.Name, Performance, Shape " +
                            "FROM Workout " +
                            "NATURAL JOIN ExerciseInWorkout " +
                            "NATURAL JOIN Exercise " +
                            "WHERE ExerciseID = {} ".format(sel_ex_id) +
-                           "AND CAST('{} 23:59:59' as datetime) >= WorkoutDate ".format(end_date) +
-                           "AND CAST('{} 00:00:00' as datetime) <= WorkoutDate;".format(start_date))
+                           "AND CAST('{} 23:59:59' as datetime) >= " +
+                           "WorkoutDate ".format(end_date) +
+                           "AND CAST('{} 00:00:00' as datetime) <= " +
+                           "WorkoutDate;".format(start_date))
             rows = cursor.fetchall()
 
             if (len(rows) > 0):
@@ -414,13 +442,12 @@ def list_exercise_results(db):
                 i += 1
                 prefix1 = '├──' if i < len(rows) else '└──'
                 prefix2 = '│' if i < len(rows) else ' '
-                print(prefix1 + Fore.CYAN + 'Date: ' + Fore.RESET + str(date))
+                print(prefix1 + Fore.RED + 'Date: ' + Fore.RESET + str(date))
                 print(prefix2 + '  ├── ' + Fore.BLUE + 'Performance:' +
                       Fore.RESET + ' {}'.format(performance))
                 print(prefix2 + '  └── ' + Fore.YELLOW + 'Shape:' +
                       Fore.RESET + '       {}'.format(performance))
             print()
-
     else:
         print('No logged exercises')
 
@@ -495,27 +522,29 @@ def list_groups(db):
         print('No groups logged.')
 
 
-# ------------------------------
-#             MENU
-# ------------------------------
+# User menu
 def choose_action(db):
     menu = [
         'Exit',
-        'Show workouts',
         'Insert a workout',
+        'Insert an exercise',
+        'Insert exercise in a group',
         'Delete a workout',
-        'Show most used devices',
-        'Show exercise groups',
+        'List workouts',
+        'List most used devices',
+        'List exercise groups',
         'List exercise results'
     ]
 
     actions = {
-        1: list_workouts,
-        2: insert_workout,
-        3: delete_workout,
-        4: list_devices,
-        5: list_groups,
-        6: list_exercise_results
+        1: insert_workout,
+        2: insert_exercise,
+        3: insert_exercise_in_group,
+        4: delete_workout,
+        5: list_workouts,
+        6: list_devices,
+        7: list_groups,
+        8: list_exercise_results
     }
 
     h.print_menu(menu)
@@ -529,9 +558,6 @@ def choose_action(db):
     return action
 
 
-# ------------------------------
-#             MAIN
-# ------------------------------
 def main():
     os.system('clear')
     print(Fore.BLUE + """

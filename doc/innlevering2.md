@@ -31,24 +31,25 @@ Etter at brukeren er ferdig med å legge til øvelser, kan den velge å legge ti
 Dette gjøre ved å kalle metoden `insert_note(db, wo_id)` med den samme ID'en.
 
 
-#### `insert_exercise(db, wo_id: int)`
-Denne metoden loggfører en øvelse. Brukeren blir først spurt om den ønsker å
-bruke en tidligere loggført øvelse, eller lage en ny.  Dersom brukeren velger
-ny blir den spurt om øvelsen er på apparat eller uten, og deretter navnet på
-øvelsen (_use-case 1_).
+#### `insert_exercise(db, wo_id=0)`
+Denne metoden loggfører en øvelse, og kalles enten fra `insert_workout` eller
+separat i `choose_action`.
+ 
+* dersom metoden kalles fra `insert_workout` (`wo_id != 0`) vil brukeren bli spurt om den
+  ønsker å bruke en tidligere loggført øvelse
+
+Dersom brukeren velger ny blir den spurt om øvelsen er på apparat eller uten,
+og deretter navnet på øvelsen (_use-case 1_).
  
 * dersom brukeren velger apparat, kalles metoden `insert_exerciseondevice(db, ex_id)`
 * dersom brukeren velger uten, kalles metoden `insert_excercisefree(db, ex_id)` 
 
 Etter at én av disse metodene er kalt, kobles treningsøkten med id `wo_id` og øvelsen 
-med id `ex_id` sammen med metoden `insert_exerciseinworkout(db, ex_id, wo_id)`.
-
-Brukeren blir deretter spurt om den ønsker å legge øvelsen i en gruppe. Dersom svaret er ja,
-kalles metoden `insert_exercise_in_group(db, ex_id)`. 
+med id `ex_id` sammen med metoden `insert_exerciseinworkout(db, ex_id, wo_id)`,
+dersom metoden ble kalt fra `insert_workout` (`wo_id != 0`)
 
 #### `insert_exerciseinworkout(db, ex_id: int, wo_id: int)`
 Denne metoden kobler sammen en treningsøkt og en øvelse i tabellen `ExerciseInWorkout` 
-
 
 #### `insert_exerciseondevice(db, ex_id: int)`
 Denne metoden kalles når brukeren har valgt å legge til en øvelse på apparat.
@@ -69,7 +70,7 @@ Denne metoden kalles når brukeren har valgt å legge til en øvelse uten appara
 Brukeren blir spurt om en beskrivelse av øvelsen, og dette legges inn i tabellen 
 `ExerciseFree`.
 
-#### `insert_exercise_in_group(db, ex_id)`
+#### `insert_exercise_in_group(db)`
 Denne metoden kobler en øvelse til øvelsesgruppe. Følgende skjer:
 
 1. Alle tidligere loggførte øvelsesgrupper listes med navn og id.
@@ -78,7 +79,9 @@ Denne metoden kobler en øvelse til øvelsesgruppe. Følgende skjer:
    - Dersom brukeren velger å lage en ny gruppe, blir brukeren spurt om navnet
      på gruppen. Hvis brukeren skriver inn et gruppenavn som allerede er
      loggført, blir øvelsen lagt inn i den eksisterende gruppen.
-3. Øvelsen legges inn i den valgte gruppen.
+3. Alle øvelser som ligger i databasen og ikke allerede er med i den gitte
+   gruppen blir å listet, og brukeren kan velge hvilken av de den ønsker å
+   legge til
 
 #### `insert_note(db, wo_id: int)`
 Denne metoden loggfører et notat tilhørende en treningsøkt. Brukeren blir spurt
@@ -125,21 +128,25 @@ utført, i det gitte tidsintervallet.
 #### `choose_action(db)`
 Denne metoden fungerer som en meny. Brukeren får følgende valg:
 
-0. Exit
-1. Show workouts
+1. Exit
 2. Insert a workout
-3. Delete a workout
-4. Show most used devices
-5. Show excercise groups
-6. List exercise results
+3. Insert an exercise
+4. Insert exercise in a group
+5. Delete a workout
+6. List workouts
+7. List most used devices
+8. List exercise groups
+9. List exercise results
 
-Hver av valgene 1 til 6 er knyttet til sin tilhørende funksjon:
+Hver av valgene 1 til 9 er knyttet til sin tilhørende funksjon:
 
-* Show workouts → `list_workouts` 
 * Insert a workout → `insert_workout` 
-* Delete a wokrout → `delete_workout` 
-* Show most used devices → `list_devices` 
-* Show exercise groups → `list_groups` 
+* Insert an exercise → `insert_exercise` 
+* Insert exercise in a group → `insert_exercise_in_group` 
+* Delete a workout → `delete_workout` 
+* List workouts → `list_workouts` 
+* List most used devices → `list_devices` 
+* List exercise groups → `list_groups` 
 * List exercise results → `list_exercise_results` 
 
 Når brukeren velger et tall, kalles den tilhørende funksjonen.
