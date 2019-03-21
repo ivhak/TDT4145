@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 from colorama import Fore, Style, init
@@ -193,7 +193,7 @@ def insert_exercise_on_device(db, ex_id: int):
 
 # Insert an exercise not performed on a device
 def insert_exercise_free(db, ex_id: int):
-    desc = input('Description: ')
+    desc = h.escape(input('Description: '))
     cursor = db.cursor()
     cursor.execute("INSERT INTO ExerciseFree(ExerciseID, Description) " +
                    "VALUES ({},'{}');".format(ex_id, desc))
@@ -220,7 +220,7 @@ def insert_exercise_in_group(db):
             input('Select an ID, or 0 to create a new group: '), 0)
 
     if (sel_group_id == 0):
-        group_name = input('Name of the group: ')
+        group_name = h.escape(input('Name of the group: '))
         if (group_name in groups.keys()):
             print('The group {} already exists, '.format(group_name) +
                   'your exercise will be added to the existing group')
@@ -263,7 +263,6 @@ def insert_exercise_in_group(db):
 
 # Get all the exercises belonging to a workout with ID wo_id
 def get_exercises(db, wo_id: int) -> list:
-    exercises = []
     cursor = db.cursor()
     cursor.execute("SELECT Exercise.Name " +
                    "FROM Workout " +
@@ -271,8 +270,7 @@ def get_exercises(db, wo_id: int) -> list:
                    "NATURAL JOIN Exercise " +
                    "WHERE WorkoutID = {};".format(wo_id))
     rows = cursor.fetchall()
-    for row, in rows:
-        exercises += [row]
+    exercises = [ex for ex, in rows]
     return exercises
 
 
@@ -550,6 +548,7 @@ def choose_action(db):
     return action
 
 
+# Main
 def main():
     os.system('clear')
     print(Fore.BLUE + """
@@ -559,9 +558,6 @@ def main():
 This program requires that you have a MySQL server running on your machine.
 Log in using your username and password for the server. Make sure the server
 is running.
-
-This program is designed to be a journal where you can log your workouts.
-
    """)
     try:
         username = input('MySQL Username: ')
