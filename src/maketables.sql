@@ -3,32 +3,32 @@ CREATE DATABASE IF NOT EXISTS WorkoutProgram;
 USE WorkoutProgram;
 
 CREATE TABLE IF NOT EXISTS Workout (
-    WorkoutID INT NOT NULL AUTO_INCREMENT,
-    WorkoutDate DATETIME DEFAULT NOW(),
-    Duration INT,
-    Performance VARCHAR(255),
-    Shape VARCHAR(255),
+    WorkoutID       INT NOT NULL AUTO_INCREMENT,
+    WorkoutDate     DATETIME DEFAULT NOW(),
+    Duration        INT,
+    Performance     VARCHAR(255),
+    Shape           VARCHAR(255),
     PRIMARY KEY (WorkoutID)
 );
 
 CREATE TABLE IF NOT EXISTS Exercise (
-    ExerciseID INT NOT NULL AUTO_INCREMENT,
-    Name VARCHAR(255),
+    ExerciseID      INT NOT NULL AUTO_INCREMENT,
+    Name            VARCHAR(255),
     PRIMARY KEY (ExerciseID)
 );
 
 CREATE TABLE IF NOT EXISTS Device (
-    DeviceID INT NOT NULL AUTO_INCREMENT,
-    Name VARCHAR(255),
-    Description VARCHAR(255),
+    DeviceID        INT NOT NULL AUTO_INCREMENT,
+    Name            VARCHAR(255),
+    Description     VARCHAR(255),
     PRIMARY KEY (DeviceID)
 );
 
 CREATE TABLE IF NOT EXISTS ExerciseDevice (
-    ExerciseID INT NOT NULL,
-    DeviceID INT NOT NULL,
-    Weight INT,
-    Repetitions INT,
+    ExerciseID      INT NOT NULL,
+    DeviceID        INT NOT NULL,
+    Weight          INT,
+    Repetitions     INT,
     PRIMARY KEY (ExerciseID),
     FOREIGN KEY (ExerciseID)
         REFERENCES Exercise(ExerciseID)
@@ -38,8 +38,8 @@ CREATE TABLE IF NOT EXISTS ExerciseDevice (
 );
 
 CREATE TABLE IF NOT EXISTS ExerciseFree (
-    ExerciseID INT NOT NULL,
-    Description VARCHAR(255),
+    ExerciseID      INT NOT NULL,
+    Description     VARCHAR(255),
     PRIMARY KEY (ExerciseID),
     FOREIGN KEY (ExerciseID)
         REFERENCES Exercise(ExerciseID)
@@ -47,8 +47,8 @@ CREATE TABLE IF NOT EXISTS ExerciseFree (
 );
 
 CREATE TABLE IF NOT EXISTS ExerciseInWorkout (
-    WorkoutID INT NOT NULL,
-    ExerciseID INT NOT NULL,
+    WorkoutID       INT NOT NULL,
+    ExerciseID      INT NOT NULL,
     PRIMARY KEY (WorkoutID, ExerciseID),
     FOREIGN KEY (WorkoutID)
         REFERENCES Workout(WorkoutID)
@@ -58,9 +58,9 @@ CREATE TABLE IF NOT EXISTS ExerciseInWorkout (
 );
 
 CREATE TABLE IF NOT EXISTS ExerciseNote (
-    WorkoutID INT NOT NULL,
-    Goal TEXT,
-    Reflection TEXT,
+    WorkoutID       INT NOT NULL,
+    Goal            TEXT,
+    Reflection      TEXT,
     PRIMARY KEY (WorkoutID),
     FOREIGN KEY (WorkoutID)
         REFERENCES Workout(WorkoutID)
@@ -68,14 +68,14 @@ CREATE TABLE IF NOT EXISTS ExerciseNote (
 );
 
 CREATE TABLE IF NOT EXISTS ExerciseGroup (
-    GroupID INT NOT NULL AUTO_INCREMENT,
-    GroupName VARCHAR(255),
+    GroupID         INT NOT NULL AUTO_INCREMENT,
+    GroupName       VARCHAR(255),
     PRIMARY KEY (GroupID)
 );
 
 CREATE TABLE IF NOT EXISTS ExerciseInGroup (
-    GroupID INT NOT NULL,
-    ExerciseID INT NOT NULL,
+    GroupID         INT NOT NULL,
+    ExerciseID      INT NOT NULL,
     PRIMARY KEY (GroupID, ExerciseID),
     FOREIGN KEY (GroupID)
         REFERENCES ExerciseGroup(GroupID)
